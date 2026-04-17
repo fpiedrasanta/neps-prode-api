@@ -1,0 +1,67 @@
+# Archivos generados por el build de .NET
+bin/
+obj/
+out/
+
+# Archivos de Visual Studio
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Paquetes NuGet
+packages/
+*.nupkg
+
+# Archivos de publicación
+publish/
+wwwroot/lib/
+
+# Archivos de Secrets y configuración local
+appsettings.json
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+*.pfx
+*.key
+*.pem
+
+# Archivos de base de datos local
+*.db
+*.mdf
+*.ldf
+
+# Archivos de Test
+TestResults/
+coverage/
+*.coverage
+
+# Archivos temporales
+*.log
+*.tmp
+*.cache
+*.swp
+.DS_Store
+Thumbs.db
+
+# Node.js (si se usa para frontend dentro del proyecto)
+node_modules/
+dist/
+build/
+
+# Migrations temporales
+Migrations/*.Designer.cs.tmp
+
+# IDE Rider
+.idea/
+*.iml
+
+# Archivos con Secrets
+client_secret_*.json
+google-client-secret.json
+*.apps.googleusercontent.com.json
+
+# Git
+*.orig
