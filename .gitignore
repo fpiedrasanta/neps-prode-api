@@ -48,7 +48,7 @@ Thumbs.db
 
 # Node.js (si se usa para frontend dentro del proyecto)
 node_modules/
-dist/
+#dist/
 build/
 
 # Migrations temporales
