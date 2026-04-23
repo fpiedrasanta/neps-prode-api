@@ -122,7 +122,7 @@ pipeline {
         DEPLOY_SCRIPTS_PATH  = "Jenkins"
         SCRIPTS_PATH         = "00 - src\\Scripts"
         ENTORNO              = "main" 
-        NOTIFICATION_EMAILS  = "mmartina@neps.com.ar,scarranza@neps.com.ar"
+        NOTIFICATION_EMAILS  = "mmartina@neps.com.ar,fpiedrasanta@neps.com.ar"
 		APPPOOL_NAMES		 = "prode-api"
 		SQL_PORT         	 = "3307"
 		NEED_RESTORE         = "false"
