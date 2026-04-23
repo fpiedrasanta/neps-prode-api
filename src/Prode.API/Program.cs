@@ -183,14 +183,6 @@ var app = builder.Build();
 
 app.UseCors("AllowFrontend");
 
-app.Use(async (context, next) =>
-{
-    var authHeader = context.Request.Headers["Authorization"].ToString();
-    Console.WriteLine($"🧾 Authorization header: {authHeader}");
-
-    await next();
-});
-
 // 🔹 Middleware
 if (app.Environment.IsDevelopment())
 {
@@ -222,13 +214,5 @@ using (var scope = app.Services.CreateScope())
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-app.Use(async (context, next) =>
-{
-    var authHeader = context.Request.Headers["Authorization"].ToString();
-    Console.WriteLine($"🧾 Authorization header: {authHeader}");
-
-    await next();
-});
 
 app.Run();
