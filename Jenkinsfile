@@ -239,7 +239,7 @@ pipeline {
                 script {
                     try {
                         ejecutarSSH("""
-                            & '${env.DEPLOY_PATH}\\${env.DEPLOY_SCRIPTS_PATH}\\backup-files.ps1' `
+                            & '${env.DEPLOY_PATH}\\${env.DEPLOY_SCRIPTS_PATH}\\backup-files-7zip.ps1' `
                                 -Source '${env.DEPLOY_PATH}' `
                                 -BackupDir '${env.BACKUP_PATH}\\binarios' `
                                 -Proyecto '${env.PROYECTO}' `
