@@ -55,7 +55,7 @@ namespace Prode.Infrastructure.Services
                 Email = dto.Email,
                 UserName = dto.Email,
                 FullName = dto.FullName,
-                AvatarPath = dto.AvatarUrl,
+                AvatarPath = null,
                 Country = country
             };
 
@@ -221,6 +221,14 @@ namespace Prode.Infrastructure.Services
                     if (string.IsNullOrEmpty(user.AvatarPath) && !string.IsNullOrEmpty(googleUserInfo.Picture))
                     {
                         user.AvatarPath = googleUserInfo.Picture;
+                    }
+                    
+                    // ✅ Siempre marcar email como verificado cuando se loguea por Google
+                    if (googleUserInfo.EmailVerified && !user.IsEmailVerified)
+                    {
+                        user.IsEmailVerified = true;
+                        user.EmailVerificationCode = null;
+                        user.EmailVerificationCodeExpiry = null;
                     }
                     
                     await _userManager.UpdateAsync(user);

@@ -1,4 +1,5 @@
 using System.Reflection;
+using AspNetCoreRateLimit;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -33,6 +34,82 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddEndpointsApiExplorer();
+
+// 🔹 Rate Limiting Protection
+builder.Services.AddMemoryCache();
+builder.Services.Configure<AspNetCoreRateLimit.IpRateLimitOptions>(options =>
+{
+    options.EnableEndpointRateLimiting = true;
+    options.StackBlockedRequests = false;
+    options.HttpStatusCode = 429;
+    options.RealIpHeader = "X-Real-IP";
+    options.ClientIdHeader = "X-ClientId";
+    options.GeneralRules = new List<AspNetCoreRateLimit.RateLimitRule>
+    {
+        // ✅ Proteccion global: max 100 requests por minuto por IP
+        new AspNetCoreRateLimit.RateLimitRule 
+        { 
+            Endpoint = "*", 
+            Period = "1m", 
+            Limit = 100 
+        },
+        
+        // ✅ Proteccion especial login: max 5 intentos por minuto (anti fuerza bruta)
+        new AspNetCoreRateLimit.RateLimitRule 
+        { 
+            Endpoint = "POST:/api/auth/login", 
+            Period = "1m", 
+            Limit = 5 
+        },
+        
+        // ✅ Proteccion forgot password: max 3 intentos por minuto
+        new AspNetCoreRateLimit.RateLimitRule 
+        { 
+            Endpoint = "POST:/api/auth/forgot-password", 
+            Period = "1m", 
+            Limit = 3 
+        }
+    };
+});
+
+builder.Services.AddSingleton<AspNetCoreRateLimit.IIpPolicyStore, AspNetCoreRateLimit.MemoryCacheIpPolicyStore>();
+builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitCounterStore, AspNetCoreRateLimit.MemoryCacheRateLimitCounterStore>();
+builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitConfiguration, AspNetCoreRateLimit.RateLimitConfiguration>();
+
+// 🔹 Security: Allowed Hosts protection against Host Header Injection
+var allowedHosts = builder.Configuration.GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?.Select(uri => 
+    {
+        try 
+        {
+            return new Uri(uri).Host;
+        } 
+        catch 
+        { 
+            return uri; 
+        }
+    })
+    .Distinct()
+    .ToArray() ?? Array.Empty<string>();
+
+if (builder.Environment.IsDevelopment())
+{
+    // Allow localhost in development
+    allowedHosts = allowedHosts.Concat(new [] { "localhost", "127.0.0.1" }).Distinct().ToArray();
+}
+
+// ✅ Configurar AllowedHosts correctamente para ASP.NET Core
+if (!builder.Environment.IsDevelopment() && allowedHosts.Any())
+{
+    // Override the default "*" value
+    builder.Configuration["AllowedHosts"] = string.Join(';', allowedHosts);
+}
+
+builder.WebHost.UseKestrel(options =>
+{
+    options.AddServerHeader = false;
+});
 
 // 🔹 Swagger + Bearer
 builder.Services.AddSwaggerGen(c =>
@@ -140,6 +217,23 @@ builder.Services.AddScoped<IMaintenanceService, MaintenanceService>();
 builder.Services.AddHostedService<MaintenanceBackgroundService>();
 
 // 🔹 JWT
+var jwtKey = builder.Configuration["Jwt:Key"];
+
+// ✅ Seguridad: NO PERMITIR arrancar la app en producción con clave por defecto
+if (string.IsNullOrWhiteSpace(jwtKey) 
+    || jwtKey == "your-secret-key-here-should-be-at-least-256-bits-long"
+    || jwtKey.Length < 32)
+{
+    if (!builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException("❌ ERROR DE SEGURIDAD: JWT Key no configurada correctamente. No se puede usar la clave por defecto en producción. Debe configurar la variable de entorno Jwt__Key con una clave aleatoria de minimo 32 caracteres.");
+    }
+    
+    // Solo en desarrollo permitimos generar clave temporal automaticamente
+    jwtKey = Convert.ToBase64String(Guid.NewGuid().ToByteArray()) + Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+    builder.Configuration["Jwt:Key"] = jwtKey;
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -156,7 +250,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")),
+                Encoding.UTF8.GetBytes(jwtKey)),
 
             NameClaimType = JwtRegisteredClaimNames.Sub, // sigue usando "sub"
             RoleClaimType = ClaimTypes.Role
@@ -173,9 +267,11 @@ builder.Services.AddCors(options =>
             ?? new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:5175" };
         
         policy.WithOrigins(allowedOrigins)
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+              .WithMethods(HttpMethods.Get, HttpMethods.Post, HttpMethods.Put, HttpMethods.Delete, HttpMethods.Options)
+              .WithHeaders("Authorization", "Content-Type", "Accept", "X-Requested-With")
+              .WithExposedHeaders("Content-Disposition")
+              .AllowCredentials()
+              .SetPreflightMaxAge(TimeSpan.FromHours(24));
     });
 });
 
@@ -193,7 +289,44 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseIpRateLimiting();
 app.UseHttpsRedirection();
+
+// 🔹 Security Headers
+if (!app.Environment.IsDevelopment())
+{
+    // ✅ HSTS: Forzar HTTPS permanentemente por 1 año
+    app.UseHsts();
+
+    // ✅ Middleware de cabeceras de seguridad estandar
+    app.Use(async (context, next) =>
+    {
+        // Protege contra Clickjacking
+        context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
+        
+        // Evita MIME Sniffing
+        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        
+        // Proteccion basica XSS
+        context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+        
+        // No permite embeber en iframes de dominios externos
+        context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'";
+        
+        // No referrer leak
+        context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        
+        // Deshabilita cache en rutas sensibles
+        if (!context.Request.Path.StartsWithSegments("/api/health") && !context.Request.Path.StartsWithSegments("/static"))
+        {
+            context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
+            context.Response.Headers["Pragma"] = "no-cache";
+        }
+
+        await next();
+    });
+}
+
 app.UseStaticFiles();
 
 // Inicializar helper de fechas
