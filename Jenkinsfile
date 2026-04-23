@@ -113,7 +113,7 @@ pipeline {
         REMOTE_HOST          = "NEPS-APP01"
         REMOTE_USER          = "neps\\jenkins"
         DEPLOY_PATH          = "D:\\Sistemas\\neps\\prode\\neps-prode-api"
-        BACKUP_PATH          = "D:\\Sistemas\\backup\\prode"
+        BACKUP_PATH          = "D:\\Sistemas\\backup\\prode\\neps-prode-api"
         LOCAL_BACKUP_DIR     = "\\\\neps-app01\\D\\Sistemas\\backup\\prode\\bd"
         SQL_INSTANCE         = "NEPS-DEV02"
         DB_NAME              = "bd_neps_prode"
@@ -241,7 +241,7 @@ pipeline {
                         ejecutarSSH("""
                             & '${env.DEPLOY_PATH}\\${env.DEPLOY_SCRIPTS_PATH}\\backup-files-7zip.ps1' `
                                 -Source '${env.DEPLOY_PATH}' `
-                                -BackupDir '${env.BACKUP_PATH}\\binarios\\${env.PROYECTO}\\' `   
+                                -BackupDir '${env.BACKUP_PATH}\\binarios' `
                                 -Proyecto '${env.PROYECTO}' `
                                 -MaxBackups ${env.MAX_BACKUPS}
                         """)
