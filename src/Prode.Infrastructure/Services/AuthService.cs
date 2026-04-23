@@ -56,7 +56,9 @@ namespace Prode.Infrastructure.Services
                 UserName = dto.Email,
                 FullName = dto.FullName,
                 AvatarPath = null,
-                Country = country
+                Country = country,
+                EmailVerificationCode = null,
+                EmailVerificationCodeExpiry = null
             };
 
             // Create user
