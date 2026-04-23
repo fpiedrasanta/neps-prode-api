@@ -35,46 +35,8 @@ builder.Services.AddControllers()
 
 builder.Services.AddEndpointsApiExplorer();
 
-// 🔹 Rate Limiting Protection
+// 🔹 Rate Limiting Protection (temporalmente deshabilitado por bug en la libreria v5.0.0)
 builder.Services.AddMemoryCache();
-builder.Services.Configure<AspNetCoreRateLimit.IpRateLimitOptions>(options =>
-{
-    options.EnableEndpointRateLimiting = true;
-    options.StackBlockedRequests = false;
-    options.HttpStatusCode = 429;
-    options.RealIpHeader = "X-Real-IP";
-    options.ClientIdHeader = "X-ClientId";
-    options.GeneralRules = new List<AspNetCoreRateLimit.RateLimitRule>
-    {
-        // ✅ Proteccion global: max 100 requests por minuto por IP
-        new AspNetCoreRateLimit.RateLimitRule 
-        { 
-            Endpoint = "*", 
-            Period = "1m", 
-            Limit = 100 
-        },
-        
-        // ✅ Proteccion especial login: max 5 intentos por minuto (anti fuerza bruta)
-        new AspNetCoreRateLimit.RateLimitRule 
-        { 
-            Endpoint = "POST:/api/auth/login", 
-            Period = "1m", 
-            Limit = 5 
-        },
-        
-        // ✅ Proteccion forgot password: max 3 intentos por minuto
-        new AspNetCoreRateLimit.RateLimitRule 
-        { 
-            Endpoint = "POST:/api/auth/forgot-password", 
-            Period = "1m", 
-            Limit = 3 
-        }
-    };
-});
-
-builder.Services.AddSingleton<AspNetCoreRateLimit.IIpPolicyStore, AspNetCoreRateLimit.MemoryCacheIpPolicyStore>();
-builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitCounterStore, AspNetCoreRateLimit.MemoryCacheRateLimitCounterStore>();
-builder.Services.AddSingleton<AspNetCoreRateLimit.IRateLimitConfiguration, AspNetCoreRateLimit.RateLimitConfiguration>();
 
 // 🔹 Security: Allowed Hosts protection against Host Header Injection
 var allowedHosts = builder.Configuration.GetSection("Cors:AllowedOrigins")
@@ -301,7 +263,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseIpRateLimiting();
+// app.UseIpRateLimiting();
 app.UseHttpsRedirection();
 
 // 🔹 Security Headers
