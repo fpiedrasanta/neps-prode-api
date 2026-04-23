@@ -267,8 +267,8 @@ builder.Services.AddCors(options =>
             ?? new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:5175" };
         
         policy.WithOrigins(allowedOrigins)
-              .WithMethods(HttpMethods.Get, HttpMethods.Post, HttpMethods.Put, HttpMethods.Delete, HttpMethods.Options)
-              .WithHeaders("Authorization", "Content-Type", "Accept", "X-Requested-With")
+              .WithMethods(HttpMethods.Get, HttpMethods.Post, HttpMethods.Put, HttpMethods.Delete, HttpMethods.Options, HttpMethods.Head)
+              .WithHeaders("Authorization", "Content-Type", "Accept", "X-Requested-With", "X-Client-ID", "X-Requested-With", "Access-Control-Request-Method", "Access-Control-Request-Headers")
               .WithExposedHeaders("Content-Disposition")
               .AllowCredentials()
               .SetPreflightMaxAge(TimeSpan.FromHours(24));
@@ -278,6 +278,18 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors("AllowFrontend");
+
+// ✅ Fix CORS Preflight OPTIONS requests
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == HttpMethods.Options)
+    {
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
+        return;
+    }
+    
+    await next();
+});
 
 // 🔹 Middleware
 if (app.Environment.IsDevelopment())
