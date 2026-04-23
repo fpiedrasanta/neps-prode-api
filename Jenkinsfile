@@ -241,7 +241,7 @@ pipeline {
                         ejecutarSSH("""
                             & '${env.DEPLOY_PATH}\\${env.DEPLOY_SCRIPTS_PATH}\\backup-files-7zip.ps1' `
                                 -Source '${env.DEPLOY_PATH}' `
-                                -BackupDir '${env.BACKUP_PATH}\\binarios\\${env.PROYECTO}' `   
+                                -BackupDir '${env.BACKUP_PATH}\\binarios\\${env.PROYECTO}\\' `   
                                 -Proyecto '${env.PROYECTO}' `
                                 -MaxBackups ${env.MAX_BACKUPS}
                         """)
