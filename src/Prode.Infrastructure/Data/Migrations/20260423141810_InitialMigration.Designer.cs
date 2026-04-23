@@ -12,7 +12,7 @@ using Prode.Infrastructure.Data;
 namespace Prode.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260330173422_InitialMigration")]
+    [Migration("20260423141810_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -185,9 +185,18 @@ namespace Prode.Infrastructure.Data.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("EmailVerificationCode")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("EmailVerificationCodeExpiry")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("tinyint(1)");
@@ -214,6 +223,9 @@ namespace Prode.Infrastructure.Data.Migrations
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("longtext");
+
+                    b.Property<int?>("TotalPoints")
+                        .HasColumnType("int");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("tinyint(1)");
@@ -245,6 +257,9 @@ namespace Prode.Infrastructure.Data.Migrations
                     b.Property<Guid>("CountryId")
                         .HasColumnType("char(36)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -254,6 +269,38 @@ namespace Prode.Infrastructure.Data.Migrations
                     b.HasIndex("CountryId");
 
                     b.ToTable("Cities");
+                });
+
+            modelBuilder.Entity("Prode.Domain.Entities.Comment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("Prode.Domain.Entities.Country", b =>
@@ -283,6 +330,39 @@ namespace Prode.Infrastructure.Data.Migrations
                     b.ToTable("Countries");
                 });
 
+            modelBuilder.Entity("Prode.Domain.Entities.Friendship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("AddresseeId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("RequesterId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddresseeId");
+
+                    b.HasIndex("RequesterId", "AddresseeId")
+                        .IsUnique();
+
+                    b.ToTable("Friendships");
+                });
+
             modelBuilder.Entity("Prode.Domain.Entities.Match", b =>
                 {
                     b.Property<Guid>("Id")
@@ -307,6 +387,9 @@ namespace Prode.Infrastructure.Data.Migrations
                     b.Property<Guid>("HomeTeamId")
                         .HasColumnType("char(36)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime>("MatchDate")
                         .HasColumnType("datetime(6)");
 
@@ -321,6 +404,46 @@ namespace Prode.Infrastructure.Data.Migrations
                     b.HasIndex("HomeTeamId");
 
                     b.ToTable("Matches");
+                });
+
+            modelBuilder.Entity("Prode.Domain.Entities.Post", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("MatchId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int?>("PointsEarned")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("PredictionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MatchId");
+
+                    b.HasIndex("PredictionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Posts");
                 });
 
             modelBuilder.Entity("Prode.Domain.Entities.Prediction", b =>
@@ -386,7 +509,7 @@ namespace Prode.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ResultType");
+                    b.ToTable("ResultTypes");
                 });
 
             modelBuilder.Entity("Prode.Domain.Entities.Team", b =>
@@ -400,6 +523,9 @@ namespace Prode.Infrastructure.Data.Migrations
 
                     b.Property<string>("FlagUrl")
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -483,6 +609,44 @@ namespace Prode.Infrastructure.Data.Migrations
                     b.Navigation("Country");
                 });
 
+            modelBuilder.Entity("Prode.Domain.Entities.Comment", b =>
+                {
+                    b.HasOne("Prode.Domain.Entities.Post", "Post")
+                        .WithMany("Comments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prode.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Prode.Domain.Entities.Friendship", b =>
+                {
+                    b.HasOne("Prode.Domain.Entities.ApplicationUser", "Addressee")
+                        .WithMany()
+                        .HasForeignKey("AddresseeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Prode.Domain.Entities.ApplicationUser", "Requester")
+                        .WithMany()
+                        .HasForeignKey("RequesterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Addressee");
+
+                    b.Navigation("Requester");
+                });
+
             modelBuilder.Entity("Prode.Domain.Entities.Match", b =>
                 {
                     b.HasOne("Prode.Domain.Entities.Team", "AwayTeam")
@@ -518,10 +682,36 @@ namespace Prode.Infrastructure.Data.Migrations
                     b.Navigation("HomeTeam");
                 });
 
-            modelBuilder.Entity("Prode.Domain.Entities.Prediction", b =>
+            modelBuilder.Entity("Prode.Domain.Entities.Post", b =>
                 {
                     b.HasOne("Prode.Domain.Entities.Match", "Match")
                         .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Prode.Domain.Entities.Prediction", "Prediction")
+                        .WithMany()
+                        .HasForeignKey("PredictionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Prode.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Match");
+
+                    b.Navigation("Prediction");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Prode.Domain.Entities.Prediction", b =>
+                {
+                    b.HasOne("Prode.Domain.Entities.Match", "Match")
+                        .WithMany("Predictions")
                         .HasForeignKey("MatchId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -550,6 +740,16 @@ namespace Prode.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Country");
+                });
+
+            modelBuilder.Entity("Prode.Domain.Entities.Match", b =>
+                {
+                    b.Navigation("Predictions");
+                });
+
+            modelBuilder.Entity("Prode.Domain.Entities.Post", b =>
+                {
+                    b.Navigation("Comments");
                 });
 
             modelBuilder.Entity("Prode.Domain.Entities.ResultType", b =>
