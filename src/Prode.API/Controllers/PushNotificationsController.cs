@@ -82,6 +82,25 @@ public class PushNotificationsController : ControllerBase
         
         return Ok();
     }
+
+    /// <summary>
+    /// Endpoint para que el frontend elimine su suscripción
+    /// </summary>
+    [HttpPost("unsubscribe")]
+    [Authorize]
+    public async Task<IActionResult> Unsubscribe([FromBody] PushSubscription subscription)
+    {
+        var existing = await _dbContext.UserPushSubscriptions
+            .FirstOrDefaultAsync(s => s.Endpoint == subscription.Endpoint);
+
+        if (existing == null)
+            return Ok();
+
+        _dbContext.UserPushSubscriptions.Remove(existing);
+        await _dbContext.SaveChangesAsync();
+        
+        return Ok();
+    }
 }
 
 public class SendNotificationRequest
