@@ -139,6 +139,9 @@ builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<IMaintenanceService, MaintenanceService>();
 builder.Services.AddHostedService<MaintenanceBackgroundService>();
 
+// 🔹 Push Notifications
+builder.Services.AddScoped<IPushNotificationService, WebPushNotificationService>();
+
 // 🔹 JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

@@ -574,6 +574,14 @@
           }
         }
       },
+      "Portable.BouncyCastle/1.8.1.3": {
+        "runtime": {
+          "lib/netstandard2.0/BouncyCastle.Crypto.dll": {
+            "assemblyVersion": "1.8.1.0",
+            "fileVersion": "1.8.1.146"
+          }
+        }
+      },
       "Swashbuckle.AspNetCore/6.5.0": {
         "dependencies": {
           "Microsoft.Extensions.ApiDescription.Server": "6.0.5",
@@ -689,6 +697,18 @@
         }
       },
       "System.Threading.Channels/6.0.0": {},
+      "WebPush/1.0.12": {
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.2",
+          "Portable.BouncyCastle": "1.8.1.3"
+        },
+        "runtime": {
+          "lib/net5.0/WebPush.dll": {
+            "assemblyVersion": "1.0.11.0",
+            "fileVersion": "1.0.11.0"
+          }
+        }
+      },
       "Prode.Application/1.0.0": {
         "dependencies": {
           "Microsoft.AspNetCore.Http.Abstractions": "2.3.9",
@@ -725,7 +745,8 @@
           "Pomelo.EntityFrameworkCore.MySql": "8.0.2",
           "Prode.Application": "1.0.0",
           "Prode.Domain": "1.0.0",
-          "System.IdentityModel.Tokens.Jwt": "8.2.1"
+          "System.IdentityModel.Tokens.Jwt": "8.2.1",
+          "WebPush": "1.0.12"
         },
         "runtime": {
           "Prode.Infrastructure.dll": {
@@ -1204,6 +1225,13 @@
       "path": "pomelo.entityframeworkcore.mysql/8.0.2",
       "hashPath": "pomelo.entityframeworkcore.mysql.8.0.2.nupkg.sha512"
     },
+    "Portable.BouncyCastle/1.8.1.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-1jUpszv0ETm+hl78HKnYgY3wPzt6qRtjxaPENNrGCuB8nondbR/j75WAKdd6sxXzOzBcX07WMZhZEYc4s5jVWg==",
+      "path": "portable.bouncycastle/1.8.1.3",
+      "hashPath": "portable.bouncycastle.1.8.1.3.nupkg.sha512"
+    },
     "Swashbuckle.AspNetCore/6.5.0": {
       "type": "package",
       "serviceable": true,
@@ -1357,6 +1385,13 @@
       "sha512": "sha512-TY8/9+tI0mNaUMgntOxxaq2ndTkdXqLSxvPmas7XEqOlv9lQtB7wLjYGd756lOaO7Dvb5r/WXhluM+0Xe87v5Q==",
       "path": "system.threading.channels/6.0.0",
       "hashPath": "system.threading.channels.6.0.0.nupkg.sha512"
+    },
+    "WebPush/1.0.12": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vc91Uby6UaQQijOPRY4B1tWFaQJlbfOyfOMIPpdAT6mANcPhHcvDJeLjr6B0Adjij71WIAH718MC7coQdrJZAw==",
+      "path": "webpush/1.0.12",
+      "hashPath": "webpush.1.0.12.nupkg.sha512"
     },
     "Prode.Application/1.0.0": {
       "type": "project",
