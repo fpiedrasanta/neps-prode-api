@@ -207,6 +207,10 @@ namespace Prode.Infrastructure.Services
                         Country = null // Podría asignarse un país por defecto o dejarlo null
                     };
 
+                    user.IsEmailVerified = true;
+                    user.EmailVerificationCode = null;
+                    user.EmailVerificationCodeExpiry = null;
+
                     var result = await _userManager.CreateAsync(user);
                     if (!result.Succeeded)
                     {
