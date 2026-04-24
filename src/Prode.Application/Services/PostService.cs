@@ -92,9 +92,9 @@ namespace Prode.Application.Services
                 
                 MatchId = post.MatchId,
                 HomeTeamName = post.Match?.HomeTeam?.Name ?? string.Empty,
-                HomeTeamFlagUrl = post.Match?.HomeTeam?.Country?.FlagUrl,
+                HomeTeamFlagUrl = post.Match?.HomeTeam?.FlagUrl,
                 AwayTeamName = post.Match?.AwayTeam?.Name ?? string.Empty,
-                AwayTeamFlagUrl = post.Match?.AwayTeam?.Country?.FlagUrl,
+                AwayTeamFlagUrl = post.Match?.AwayTeam?.FlagUrl,
                 
                 HomeScore = post.Match?.HomeScore,
                 AwayScore = post.Match?.AwayScore,
