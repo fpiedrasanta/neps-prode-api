@@ -1,0 +1,186 @@
+2026-04-27 17:32:10.395 -03:00 [INF] Executed DbCommand (88ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='prode' AND TABLE_NAME='__EFMigrationsHistory';
+2026-04-27 17:32:10.461 -03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='prode' AND TABLE_NAME='__EFMigrationsHistory';
+2026-04-27 17:32:10.552 -03:00 [INF] Executed DbCommand (72ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT `MigrationId`, `ProductVersion`
+FROM `__EFMigrationsHistory`
+ORDER BY `MigrationId`;
+2026-04-27 17:32:10.572 -03:00 [INF] Applying migration '20260427203156_refresh_token'.
+2026-04-27 17:32:10.845 -03:00 [INF] Executed DbCommand (109ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Comments` DROP FOREIGN KEY `FK_Comments_AspNetUsers_UserId`;
+2026-04-27 17:32:10.892 -03:00 [INF] Executed DbCommand (47ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Friendships` DROP FOREIGN KEY `FK_Friendships_AspNetUsers_AddresseeId`;
+2026-04-27 17:32:10.907 -03:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Friendships` DROP FOREIGN KEY `FK_Friendships_AspNetUsers_RequesterId`;
+2026-04-27 17:32:10.956 -03:00 [INF] Executed DbCommand (49ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Posts` DROP FOREIGN KEY `FK_Posts_AspNetUsers_UserId`;
+2026-04-27 17:32:11.005 -03:00 [INF] Executed DbCommand (37ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Posts` DROP FOREIGN KEY `FK_Posts_Matches_MatchId`;
+2026-04-27 17:32:11.043 -03:00 [INF] Executed DbCommand (37ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Posts` DROP FOREIGN KEY `FK_Posts_Predictions_PredictionId`;
+2026-04-27 17:32:11.070 -03:00 [INF] Executed DbCommand (26ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Friendships` DROP INDEX `IX_Friendships_RequesterId_AddresseeId`;
+2026-04-27 17:32:11.090 -03:00 [INF] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER DATABASE COLLATE utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.126 -03:00 [INF] Executed DbCommand (36ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `UserPushSubscriptions` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.163 -03:00 [INF] Executed DbCommand (37ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Teams` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.192 -03:00 [INF] Executed DbCommand (29ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `ResultTypes` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.219 -03:00 [INF] Executed DbCommand (27ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Predictions` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.235 -03:00 [INF] Executed DbCommand (15ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Posts` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.263 -03:00 [INF] Executed DbCommand (27ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Matches` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.273 -03:00 [INF] Executed DbCommand (10ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Friendships` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.336 -03:00 [INF] Executed DbCommand (62ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Countries` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.347 -03:00 [INF] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Comments` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.370 -03:00 [INF] Executed DbCommand (22ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Cities` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.395 -03:00 [INF] Executed DbCommand (25ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserTokens` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.492 -03:00 [INF] Executed DbCommand (96ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.506 -03:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserRoles` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.527 -03:00 [INF] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserLogins` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.545 -03:00 [INF] Executed DbCommand (18ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserClaims` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.607 -03:00 [INF] Executed DbCommand (62ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetRoles` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.622 -03:00 [INF] Executed DbCommand (15ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetRoleClaims` COLLATE=utf8mb4_0900_ai_ci;
+2026-04-27 17:32:11.644 -03:00 [INF] Executed DbCommand (21ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `UserPushSubscriptions` MODIFY COLUMN `UserId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.662 -03:00 [INF] Executed DbCommand (18ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `UserPushSubscriptions` MODIFY COLUMN `UserAgent` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.681 -03:00 [INF] Executed DbCommand (19ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `UserPushSubscriptions` MODIFY COLUMN `P256dh` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.697 -03:00 [INF] Executed DbCommand (16ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `UserPushSubscriptions` MODIFY COLUMN `Endpoint` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.715 -03:00 [INF] Executed DbCommand (18ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `UserPushSubscriptions` MODIFY COLUMN `Auth` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.738 -03:00 [INF] Executed DbCommand (22ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Teams` MODIFY COLUMN `Name` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.781 -03:00 [INF] Executed DbCommand (43ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Teams` MODIFY COLUMN `FlagUrl` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:11.804 -03:00 [INF] Executed DbCommand (23ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `ResultTypes` MODIFY COLUMN `Name` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.828 -03:00 [INF] Executed DbCommand (24ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `ResultTypes` MODIFY COLUMN `Description` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.896 -03:00 [INF] Executed DbCommand (66ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Predictions` MODIFY COLUMN `UserId` varchar(255) COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:11.918 -03:00 [INF] Executed DbCommand (21ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Posts` MODIFY COLUMN `UserId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.935 -03:00 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Posts` MODIFY COLUMN `Content` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.948 -03:00 [INF] Executed DbCommand (12ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Friendships` MODIFY COLUMN `RequesterId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.961 -03:00 [INF] Executed DbCommand (13ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Friendships` MODIFY COLUMN `AddresseeId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:11.991 -03:00 [INF] Executed DbCommand (30ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Countries` MODIFY COLUMN `Name` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.027 -03:00 [INF] Executed DbCommand (36ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Countries` MODIFY COLUMN `IsoCode2` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.065 -03:00 [INF] Executed DbCommand (37ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Countries` MODIFY COLUMN `IsoCode` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.102 -03:00 [INF] Executed DbCommand (37ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Countries` MODIFY COLUMN `FlagUrl` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.123 -03:00 [INF] Executed DbCommand (20ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Comments` MODIFY COLUMN `UserId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.139 -03:00 [INF] Executed DbCommand (16ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Comments` MODIFY COLUMN `Content` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.158 -03:00 [INF] Executed DbCommand (19ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Cities` MODIFY COLUMN `Name` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.180 -03:00 [INF] Executed DbCommand (21ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserTokens` MODIFY COLUMN `Value` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.192 -03:00 [INF] Executed DbCommand (12ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserTokens` MODIFY COLUMN `Name` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.201 -03:00 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserTokens` MODIFY COLUMN `LoginProvider` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.214 -03:00 [INF] Executed DbCommand (13ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserTokens` MODIFY COLUMN `UserId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.262 -03:00 [INF] Executed DbCommand (47ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `UserName` varchar(256) COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.309 -03:00 [INF] Executed DbCommand (47ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `SecurityStamp` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.349 -03:00 [INF] Executed DbCommand (40ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `PhoneNumber` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.396 -03:00 [INF] Executed DbCommand (47ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `PasswordHash` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.434 -03:00 [INF] Executed DbCommand (38ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `NormalizedUserName` varchar(256) COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.473 -03:00 [INF] Executed DbCommand (39ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `NormalizedEmail` varchar(256) COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.515 -03:00 [INF] Executed DbCommand (42ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `FullName` longtext COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.557 -03:00 [INF] Executed DbCommand (41ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `EmailVerificationCode` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.593 -03:00 [INF] Executed DbCommand (36ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `Email` varchar(256) COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.635 -03:00 [INF] Executed DbCommand (41ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `ConcurrencyStamp` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.677 -03:00 [INF] Executed DbCommand (42ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `AvatarPath` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.715 -03:00 [INF] Executed DbCommand (38ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` MODIFY COLUMN `Id` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.775 -03:00 [INF] Executed DbCommand (59ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` ADD `RefreshToken` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.829 -03:00 [INF] Executed DbCommand (54ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUsers` ADD `RefreshTokenExpiryTime` datetime(6) NOT NULL DEFAULT '0001-01-01 00:00:00';
+2026-04-27 17:32:12.845 -03:00 [INF] Executed DbCommand (16ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserRoles` MODIFY COLUMN `RoleId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.869 -03:00 [INF] Executed DbCommand (24ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserRoles` MODIFY COLUMN `UserId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.912 -03:00 [INF] Executed DbCommand (43ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserLogins` MODIFY COLUMN `UserId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.941 -03:00 [INF] Executed DbCommand (29ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserLogins` MODIFY COLUMN `ProviderDisplayName` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:12.959 -03:00 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserLogins` MODIFY COLUMN `ProviderKey` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.975 -03:00 [INF] Executed DbCommand (16ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserLogins` MODIFY COLUMN `LoginProvider` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:12.994 -03:00 [INF] Executed DbCommand (18ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserClaims` MODIFY COLUMN `UserId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:13.011 -03:00 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserClaims` MODIFY COLUMN `ClaimValue` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:13.028 -03:00 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetUserClaims` MODIFY COLUMN `ClaimType` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:13.051 -03:00 [INF] Executed DbCommand (23ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetRoles` MODIFY COLUMN `NormalizedName` varchar(256) COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:13.076 -03:00 [INF] Executed DbCommand (25ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetRoles` MODIFY COLUMN `Name` varchar(256) COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:13.093 -03:00 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetRoles` MODIFY COLUMN `ConcurrencyStamp` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:13.114 -03:00 [INF] Executed DbCommand (21ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetRoles` MODIFY COLUMN `Id` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:13.127 -03:00 [INF] Executed DbCommand (13ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetRoleClaims` MODIFY COLUMN `RoleId` varchar(255) COLLATE utf8mb4_0900_ai_ci NOT NULL;
+2026-04-27 17:32:13.138 -03:00 [INF] Executed DbCommand (10ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetRoleClaims` MODIFY COLUMN `ClaimValue` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:13.150 -03:00 [INF] Executed DbCommand (12ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `AspNetRoleClaims` MODIFY COLUMN `ClaimType` longtext COLLATE utf8mb4_0900_ai_ci NULL;
+2026-04-27 17:32:13.187 -03:00 [INF] Executed DbCommand (37ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX `IX_Friendships_RequesterId` ON `Friendships` (`RequesterId`);
+2026-04-27 17:32:13.353 -03:00 [INF] Executed DbCommand (166ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Comments` ADD CONSTRAINT `FK_Comments_AspNetUsers_UserId` FOREIGN KEY (`UserId`) REFERENCES `AspNetUsers` (`Id`) ON DELETE CASCADE;
+2026-04-27 17:32:13.464 -03:00 [INF] Executed DbCommand (111ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Friendships` ADD CONSTRAINT `FK_Friendships_AspNetUsers_AddresseeId` FOREIGN KEY (`AddresseeId`) REFERENCES `AspNetUsers` (`Id`) ON DELETE CASCADE;
+2026-04-27 17:32:13.603 -03:00 [INF] Executed DbCommand (140ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Friendships` ADD CONSTRAINT `FK_Friendships_AspNetUsers_RequesterId` FOREIGN KEY (`RequesterId`) REFERENCES `AspNetUsers` (`Id`) ON DELETE CASCADE;
+2026-04-27 17:32:13.790 -03:00 [INF] Executed DbCommand (186ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Posts` ADD CONSTRAINT `FK_Posts_AspNetUsers_UserId` FOREIGN KEY (`UserId`) REFERENCES `AspNetUsers` (`Id`) ON DELETE CASCADE;
+2026-04-27 17:32:13.956 -03:00 [INF] Executed DbCommand (166ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Posts` ADD CONSTRAINT `FK_Posts_Matches_MatchId` FOREIGN KEY (`MatchId`) REFERENCES `Matches` (`Id`) ON DELETE CASCADE;
+2026-04-27 17:32:14.089 -03:00 [INF] Executed DbCommand (133ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Posts` ADD CONSTRAINT `FK_Posts_Predictions_PredictionId` FOREIGN KEY (`PredictionId`) REFERENCES `Predictions` (`Id`);
+2026-04-27 17:32:14.093 -03:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20260427203156_refresh_token', '8.0.11');
