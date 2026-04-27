@@ -13,7 +13,7 @@ namespace Prode.Infrastructure.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "UserPushSubscriptions",
+                name: "userpushsubscriptions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -37,7 +37,7 @@ namespace Prode.Infrastructure.Data.Migrations
                     table.ForeignKey(
                         name: "FK_UserPushSubscriptions_AspNetUsers_UserId",
                         column: x => x.UserId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "aspnetusers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
@@ -45,7 +45,7 @@ namespace Prode.Infrastructure.Data.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserPushSubscriptions_UserId",
-                table: "UserPushSubscriptions",
+                table: "userpushsubscriptions",
                 column: "UserId");
         }
 
@@ -53,7 +53,7 @@ namespace Prode.Infrastructure.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "UserPushSubscriptions");
+                name: "userpushsubscriptions");
         }
     }
 }
