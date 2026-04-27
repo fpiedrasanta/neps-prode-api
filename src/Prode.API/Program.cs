@@ -17,8 +17,20 @@ using System.Security.Claims;
 using Prode.Domain.Entities;
 using Prode.Application.Helpers;
 using Prode.API.Converters;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.File(
+        "logs/log-.txt",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7
+    )
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
 
 // 🔹 Add services
 builder.Services.AddControllers()

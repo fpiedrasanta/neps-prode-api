@@ -18,10 +18,16 @@ public class PushNotificationsController : ControllerBase
     private readonly IPushNotificationService _pushNotificationService;
     private readonly ApplicationDbContext _dbContext;
 
-    public PushNotificationsController(IPushNotificationService pushNotificationService, ApplicationDbContext dbContext)
+    private readonly ILogger<PushNotificationsController> _logger;
+
+    public PushNotificationsController(
+        ILogger<PushNotificationsController> logger, 
+        IPushNotificationService pushNotificationService, 
+        ApplicationDbContext dbContext)
     {
         _pushNotificationService = pushNotificationService;
         _dbContext = dbContext;
+        this._logger = logger;
     }
 
     /// <summary>
@@ -30,7 +36,9 @@ public class PushNotificationsController : ControllerBase
     [HttpGet("public-key")]
     public IActionResult GetVapidPublicKey()
     {
-        return Ok(new { PublicKey = _pushNotificationService.GetVapidPublicKey() });
+        string publicKey = _pushNotificationService.GetVapidPublicKey();
+        _logger.LogInformation("✅ Public Key: " + publicKey);
+        return Ok(new { PublicKey = publicKey });
     }
 
     /// <summary>
@@ -40,6 +48,11 @@ public class PushNotificationsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> SendNotification([FromBody] SendNotificationRequest request)
     {
+        _logger.LogInformation("✅ Subscription: " + request.Subscription);
+        _logger.LogInformation("✅ Title: " + request.Title);
+        _logger.LogInformation("✅ Body: " + request.Body);
+        _logger.LogInformation("✅ Data: " + request.Data);
+
         await _pushNotificationService.SendNotificationAsync(
             request.Subscription, 
             request.Title, 
@@ -56,7 +69,13 @@ public class PushNotificationsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Subscribe([FromBody] PushSubscription subscription)
     {
+        _logger.LogInformation("✅ Endpoint: " + subscription.Endpoint);
+        _logger.LogInformation("✅ P256dh: " + subscription.Keys.P256dh);
+        _logger.LogInformation("✅ Auth: " + subscription.Keys.Auth);
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        _logger.LogInformation("✅ userId: " + userId);
         
         if (userId == null)
             return Unauthorized();
@@ -64,6 +83,8 @@ public class PushNotificationsController : ControllerBase
         // Evitar duplicados
         var existing = await _dbContext.UserPushSubscriptions
             .FirstOrDefaultAsync(s => s.Endpoint == subscription.Endpoint);
+        
+        _logger.LogInformation("✅ existing: " + (existing != null ? "Si" : "No"));
 
         if (existing != null)
             return Ok();
@@ -78,8 +99,10 @@ public class PushNotificationsController : ControllerBase
         };
 
         _dbContext.UserPushSubscriptions.Add(userSubscription);
-        await _dbContext.SaveChangesAsync();
         
+        _logger.LogInformation("✅ Add");
+        await _dbContext.SaveChangesAsync();
+        _logger.LogInformation("✅ Save");
         return Ok();
     }
 
@@ -90,15 +113,24 @@ public class PushNotificationsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Unsubscribe([FromBody] PushSubscription subscription)
     {
+        _logger.LogInformation("✅ Endpoint: " + subscription.Endpoint);
+        _logger.LogInformation("✅ P256dh: " + subscription.Keys.P256dh);
+        _logger.LogInformation("✅ Auth: " + subscription.Keys.Auth);
+
         var existing = await _dbContext.UserPushSubscriptions
             .FirstOrDefaultAsync(s => s.Endpoint == subscription.Endpoint);
+
+        _logger.LogInformation("✅ existing: " + (existing != null ? "Si" : "No"));
 
         if (existing == null)
             return Ok();
 
         _dbContext.UserPushSubscriptions.Remove(existing);
+        _logger.LogInformation("✅ Remove");
+
         await _dbContext.SaveChangesAsync();
-        
+        _logger.LogInformation("✅ Save");
+
         return Ok();
     }
 }
