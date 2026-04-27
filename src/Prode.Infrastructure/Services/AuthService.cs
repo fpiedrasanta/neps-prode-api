@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -19,17 +20,20 @@ namespace Prode.Infrastructure.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly ICountryRepository _countryRepository;
+        private readonly IFileService _fileService;
         private readonly IServiceProvider _serviceProvider;
 
         public AuthService(
             UserManager<ApplicationUser> userManager, 
             IConfiguration configuration, 
             ICountryRepository countryRepository,
+            IFileService fileService,
             IServiceProvider serviceProvider)
         {
             _userManager = userManager;
             _configuration = configuration;
             _countryRepository = countryRepository;
+            _fileService = fileService;
             _serviceProvider = serviceProvider;
         }
 
@@ -129,19 +133,8 @@ namespace Prode.Infrastructure.Services
                 throw new Exception("Debe verificar su correo electrónico antes de iniciar sesión");
             }
 
-            // Generate JWT
-            var token = await GenerateJwtTokenAsync(user);
-
-            return new AuthResponseDto
-            {
-                Token = token,
-                Email = user.Email,
-                FullName = user.FullName,
-                AvatarUrl = user.AvatarPath,
-                CountryId = user.Country?.Id ?? Guid.Empty,
-                CountryDescription = user.Country?.Name ?? "Desconocido",
-                Roles = await _userManager.GetRolesAsync(user)
-            };
+            // Generar respuesta completa con Access Token + Refresh Token
+            return await GenerateAuthResponseAsync(user);
         }
 
         private async Task<string> GenerateJwtTokenAsync(ApplicationUser user)
@@ -179,6 +172,40 @@ namespace Prode.Infrastructure.Services
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+        
+        private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user)
+        {
+            var token = await GenerateJwtTokenAsync(user);
+            
+            // Sliding Expiration: 7 dias a partir de AHORA
+            var refreshToken = GenerateRefreshToken();
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _userManager.UpdateAsync(user);
+
+            var roles = await _userManager.GetRolesAsync(user);
+            
+            return new AuthResponseDto
+            {
+                Token = token,
+                RefreshToken = refreshToken,
+                Email = user.Email!,
+                FullName = user.FullName,
+                AvatarUrl = user.AvatarPath != null ? _fileService.GetAvatarUrl(user.AvatarPath).Result : string.Empty,
+                CountryId = user.Country?.Id ?? Guid.Empty,
+                CountryDescription = user.Country?.Name ?? string.Empty,
+                Roles = roles,
+                RequiresEmailVerification = !user.IsEmailVerified
+            };
         }
 
         public async Task<AuthResponseDto> LoginWithGoogleAsync(GoogleLoginDto dto)
@@ -251,19 +278,8 @@ namespace Prode.Infrastructure.Services
                     }
                 }
 
-                // Generar JWT
-                var token = await GenerateJwtTokenAsync(user);
-
-                return new AuthResponseDto
-                {
-                    Token = token,
-                    Email = user.Email,
-                    FullName = user.FullName,
-                    AvatarUrl = user.AvatarPath,
-                    CountryId = user.Country?.Id ?? Guid.Empty,
-                    CountryDescription = user.Country?.Name ?? "Desconocido",
-                    Roles = await _userManager.GetRolesAsync(user)
-                };
+            // Generar respuesta completa con Access Token + Refresh Token
+            return await GenerateAuthResponseAsync(user);
             }
             catch (Exception ex)
             {
@@ -531,20 +547,10 @@ namespace Prode.Infrastructure.Services
             
             await _userManager.UpdateAsync(user);
 
-            // Generar JWT ahora que el correo esta verificado
-            var token = await GenerateJwtTokenAsync(user);
-
-            return new AuthResponseDto
-            {
-                Token = token,
-                Email = user.Email,
-                FullName = user.FullName,
-                AvatarUrl = user.AvatarPath,
-                CountryId = user.Country?.Id ?? Guid.Empty,
-                CountryDescription = user.Country?.Name ?? "Desconocido",
-                Roles = await _userManager.GetRolesAsync(user),
-                RequiresEmailVerification = false
-            };
+            // Generar respuesta completa con Access Token + Refresh Token
+            var response = await GenerateAuthResponseAsync(user);
+            response.RequiresEmailVerification = false;
+            return response;
         }
 
         private async Task SendForgotPasswordEmailAsync(string email, string code)
@@ -690,6 +696,27 @@ namespace Prode.Infrastructure.Services
 
             // Error: no acertó resultado
             return "Error";
+        }
+        
+        public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)
+        {
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+            
+            if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+                throw new Exception("Refresh token invalido o expirado");
+
+            // Cargar la relación Country
+            if (user.Country == null)
+            {
+                var userWithCountry = await _userManager.FindByIdAsync(user.Id);
+                if (userWithCountry != null && userWithCountry.Country != null)
+                {
+                    user.Country = userWithCountry.Country;
+                }
+            }
+
+            // Sliding expiration: renovar el refresh token tambien por otros 7 dias
+            return await GenerateAuthResponseAsync(user);
         }
     }
 }

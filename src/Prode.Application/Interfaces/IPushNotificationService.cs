@@ -11,6 +11,21 @@ public interface IPushNotificationService
     /// Obtiene la clave pública VAPID para el frontend
     /// </summary>
     string GetVapidPublicKey();
+
+    /// <summary>
+    /// Registra una nueva suscripción de notificaciones push para un usuario
+    /// </summary>
+    Task SubscribeAsync(PushSubscription subscription, string userId, string userAgent);
+
+    /// <summary>
+    /// Elimina una suscripción de notificaciones push existente
+    /// </summary>
+    Task UnsubscribeAsync(PushSubscription subscription);
+
+    /// <summary>
+    /// Verifica si un usuario ya esta suscrito a un endpoint
+    /// </summary>
+    Task<bool> IsSubscribedAsync(string userId, string endpoint);
 }
 
 /// <summary>

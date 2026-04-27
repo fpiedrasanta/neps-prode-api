@@ -48,7 +48,10 @@ namespace Prode.Infrastructure.Repositories
             }
 
             // Ordenar por fecha
-            query = query.OrderBy(m => m.MatchDate);
+            if (filter.Status == MatchStatusFilter.Finished)
+                query = query.OrderByDescending(m => m.MatchDate);
+            else
+                query = query.OrderBy(m => m.MatchDate);
 
             // Aplicar paginación
             var skip = (filter.PageNumber - 1) * filter.PageSize;
