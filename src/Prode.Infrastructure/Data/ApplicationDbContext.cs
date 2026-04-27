@@ -34,8 +34,6 @@ namespace Prode.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.UseCollation("utf8mb4_0900_ai_ci");
         }
     }
 }
