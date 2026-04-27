@@ -35,61 +35,7 @@ namespace Prode.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configurar Friendship
-            modelBuilder.Entity<Friendship>(entity =>
-            {
-                entity.HasKey(f => f.Id);
-
-                entity.HasOne(f => f.Requester)
-                    .WithMany()
-                    .HasForeignKey(f => f.RequesterId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(f => f.Addressee)
-                    .WithMany()
-                    .HasForeignKey(f => f.AddresseeId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasIndex(f => new { f.RequesterId, f.AddresseeId })
-                    .IsUnique();
-            });
-
-            // Configurar Post
-            modelBuilder.Entity<Post>(entity =>
-            {
-                entity.HasKey(p => p.Id);
-
-                entity.HasOne(p => p.User)
-                    .WithMany()
-                    .HasForeignKey(p => p.UserId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(p => p.Match)
-                    .WithMany()
-                    .HasForeignKey(p => p.MatchId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(p => p.Prediction)
-                    .WithMany()
-                    .HasForeignKey(p => p.PredictionId)
-                    .OnDelete(DeleteBehavior.SetNull);
-            });
-
-            // Configurar Comment
-            modelBuilder.Entity<Comment>(entity =>
-            {
-                entity.HasKey(c => c.Id);
-
-                entity.HasOne(c => c.User)
-                    .WithMany()
-                    .HasForeignKey(c => c.UserId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(c => c.Post)
-                    .WithMany(p => p.Comments)
-                    .HasForeignKey(c => c.PostId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
+            modelBuilder.UseCollation("utf8mb4_0900_ai_ci");
         }
     }
 }
