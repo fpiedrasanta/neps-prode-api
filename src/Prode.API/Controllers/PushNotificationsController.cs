@@ -1,10 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Prode.Application.Interfaces;
-using Prode.Infrastructure.Data;
-using Prode.Domain.Entities;
 
 namespace Prode.API.Controllers;
 
@@ -16,18 +13,14 @@ namespace Prode.API.Controllers;
 public class PushNotificationsController : ControllerBase
 {
     private readonly IPushNotificationService _pushNotificationService;
-    private readonly ApplicationDbContext _dbContext;
-
     private readonly ILogger<PushNotificationsController> _logger;
 
     public PushNotificationsController(
         ILogger<PushNotificationsController> logger, 
-        IPushNotificationService pushNotificationService, 
-        ApplicationDbContext dbContext)
+        IPushNotificationService pushNotificationService)
     {
         _pushNotificationService = pushNotificationService;
-        _dbContext = dbContext;
-        this._logger = logger;
+        _logger = logger;
     }
 
     /// <summary>
@@ -69,40 +62,13 @@ public class PushNotificationsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Subscribe([FromBody] PushSubscription subscription)
     {
-        _logger.LogInformation("✅ Endpoint: " + subscription.Endpoint);
-        _logger.LogInformation("✅ P256dh: " + subscription.Keys.P256dh);
-        _logger.LogInformation("✅ Auth: " + subscription.Keys.Auth);
-
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        _logger.LogInformation("✅ userId: " + userId);
         
         if (userId == null)
             return Unauthorized();
 
-        // Evitar duplicados
-        var existing = await _dbContext.UserPushSubscriptions
-            .FirstOrDefaultAsync(s => s.Endpoint == subscription.Endpoint);
+        await _pushNotificationService.SubscribeAsync(subscription, userId, Request.Headers.UserAgent.ToString());
         
-        _logger.LogInformation("✅ existing: " + (existing != null ? "Si" : "No"));
-
-        if (existing != null)
-            return Ok();
-
-        var userSubscription = new UserPushSubscription
-        {
-            UserId = userId,
-            Endpoint = subscription.Endpoint,
-            P256dh = subscription.Keys.P256dh,
-            Auth = subscription.Keys.Auth,
-            UserAgent = Request.Headers.UserAgent.ToString()
-        };
-
-        _dbContext.UserPushSubscriptions.Add(userSubscription);
-        
-        _logger.LogInformation("✅ Add");
-        await _dbContext.SaveChangesAsync();
-        _logger.LogInformation("✅ Save");
         return Ok();
     }
 
@@ -113,25 +79,24 @@ public class PushNotificationsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Unsubscribe([FromBody] PushSubscription subscription)
     {
-        _logger.LogInformation("✅ Endpoint: " + subscription.Endpoint);
-        _logger.LogInformation("✅ P256dh: " + subscription.Keys.P256dh);
-        _logger.LogInformation("✅ Auth: " + subscription.Keys.Auth);
-
-        var existing = await _dbContext.UserPushSubscriptions
-            .FirstOrDefaultAsync(s => s.Endpoint == subscription.Endpoint);
-
-        _logger.LogInformation("✅ existing: " + (existing != null ? "Si" : "No"));
-
-        if (existing == null)
-            return Ok();
-
-        _dbContext.UserPushSubscriptions.Remove(existing);
-        _logger.LogInformation("✅ Remove");
-
-        await _dbContext.SaveChangesAsync();
-        _logger.LogInformation("✅ Save");
+        await _pushNotificationService.UnsubscribeAsync(subscription);
 
         return Ok();
+    }
+
+    [HttpGet("status-by-endpoint")]
+    [Authorize]
+    public async Task<IActionResult> StatusByEndpoint([FromQuery] string endpoint)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (userId == null)
+            return Unauthorized();
+
+        var isSubscribed = await _pushNotificationService
+            .IsSubscribedAsync(userId, endpoint);
+
+        return Ok(new { isSubscribed });
     }
 }
 

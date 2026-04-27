@@ -17,5 +17,9 @@ namespace Prode.Domain.Entities
         public string? EmailVerificationCode { get; set; }
         
         public DateTime? EmailVerificationCodeExpiry { get; set; }
+        
+        public string? RefreshToken { get; set; }
+        
+        public DateTime RefreshTokenExpiryTime { get; set; }
     }
 }

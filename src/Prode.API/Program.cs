@@ -153,6 +153,7 @@ builder.Services.AddHostedService<MaintenanceBackgroundService>();
 
 // 🔹 Push Notifications
 builder.Services.AddScoped<IPushNotificationService, WebPushNotificationService>();
+builder.Services.AddScoped<IUserPushSubscriptionRepository, UserPushSubscriptionRepository>();
 
 // 🔹 JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -222,6 +223,9 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     
+    // ✅ Aplicar migraciones pendientes automaticamente al iniciar
+    await dbContext.Database.MigrateAsync();
+
     await UserSeed.SeedSuperAdminAsync(userManager, roleManager);
     await ResultTypeSeed.SeedResultTypesAsync(dbContext);
 }

@@ -48,6 +48,7 @@ namespace Prode.Application.DTOs
     public class AuthResponseDto
     {
         public string Token { get; set; }
+        public string RefreshToken { get; set; }
         public string Email { get; set; }
         public string FullName { get; set; }
         public string AvatarUrl { get; set; }
@@ -55,5 +56,10 @@ namespace Prode.Application.DTOs
         public string CountryDescription { get; set; }
         public IEnumerable<string> Roles { get; set; }
         public bool RequiresEmailVerification { get; set; }
+    }
+
+    public class RefreshTokenDto
+    {
+        public string RefreshToken { get; set; }
     }
 }

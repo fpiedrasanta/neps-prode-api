@@ -185,5 +185,22 @@ namespace Prode.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Renueva el Access Token usando un Refresh Token valido
+        /// </summary>
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto refreshTokenDto)
+        {
+            try
+            {
+                var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+        }
     }
 }

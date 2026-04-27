@@ -15,5 +15,10 @@ namespace Prode.Application.Interfaces
         Task ForgotPasswordAsync(ForgotPasswordDto dto);
         Task ResetPasswordAsync(ResetPasswordDto dto);
         Task<AuthResponseDto> VerifyEmailCodeAsync(string email, string code);
+        
+        /// <summary>
+        /// Renueva el access token usando un refresh token valido (Sliding expiration)
+        /// </summary>
+        Task<AuthResponseDto> RefreshTokenAsync(string refreshToken);
     }
 }
