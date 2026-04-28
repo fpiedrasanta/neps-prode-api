@@ -258,8 +258,7 @@ namespace Prode.API.Controllers
                 Secure = secure,
                 SameSite = isCrossSite ? SameSiteMode.None : SameSiteMode.Lax,
                 Expires = DateTimeOffset.UtcNow.AddDays(7),
-                Path = "/",
-                Domain = ".neps.com.ar"
+                Path = "/"
             };
 
             Response.Cookies.Append("refresh_token", refreshToken, cookieOptions);
