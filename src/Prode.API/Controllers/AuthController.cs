@@ -256,8 +256,9 @@ namespace Prode.API.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Lax,
-                Path = "/"
+                SameSite = SameSiteMode.Lax, // O None si estuvieras en dominios totalmente distintos
+                Path = "/",
+                Domain = ".neps.com.ar" // <--- Esto es la clave
             };
 
             Response.Cookies.Append("refresh_token", refreshToken, cookieOptions);
