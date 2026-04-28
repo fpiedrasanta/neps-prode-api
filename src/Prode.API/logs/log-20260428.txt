@@ -294,3 +294,45 @@ CREATE INDEX `IX_UserPushSubscriptions_UserId` ON `UserPushSubscriptions` (`User
 2026-04-28 13:06:46.554 -03:00 [INF] Executed DbCommand (9ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
 VALUES ('20260428160631_initial_migration', '8.0.11');
+2026-04-28 14:30:27.937 -03:00 [INF] Executed DbCommand (46ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='prode' AND TABLE_NAME='__EFMigrationsHistory';
+2026-04-28 14:30:27.994 -03:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='prode' AND TABLE_NAME='__EFMigrationsHistory';
+2026-04-28 14:30:28.022 -03:00 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT `MigrationId`, `ProductVersion`
+FROM `__EFMigrationsHistory`
+ORDER BY `MigrationId`;
+2026-04-28 14:30:28.038 -03:00 [INF] Applying migration '20260428173011_token'.
+2026-04-28 14:30:28.311 -03:00 [INF] Executed DbCommand (123ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE `RefreshTokens` (
+    `Id` char(36) COLLATE ascii_general_ci NOT NULL,
+    `UserId` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+    `TokenHash` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
+    `ExpirationDate` datetime(6) NOT NULL,
+    `CreatedAt` datetime(6) NOT NULL,
+    `RevokedAt` datetime(6) NULL,
+    `ReplacedByTokenId` char(36) COLLATE ascii_general_ci NULL,
+    `CreatedByIp` varchar(45) CHARACTER SET utf8mb4 NULL,
+    `UserAgent` varchar(1024) CHARACTER SET utf8mb4 NULL,
+    CONSTRAINT `PK_RefreshTokens` PRIMARY KEY (`Id`),
+    CONSTRAINT `FK_RefreshTokens_AspNetUsers_UserId` FOREIGN KEY (`UserId`) REFERENCES `AspNetUsers` (`Id`) ON DELETE CASCADE
+) CHARACTER SET=utf8mb4;
+2026-04-28 14:30:28.346 -03:00 [INF] Executed DbCommand (34ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX `IX_RefreshTokens_TokenHash` ON `RefreshTokens` (`TokenHash`);
+2026-04-28 14:30:28.372 -03:00 [INF] Executed DbCommand (26ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX `IX_RefreshTokens_UserId` ON `RefreshTokens` (`UserId`);
+2026-04-28 14:30:28.375 -03:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20260428173011_token', '8.0.11');
+2026-04-28 14:54:35.219 -03:00 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='prode' AND TABLE_NAME='__EFMigrationsHistory';
+2026-04-28 14:54:35.271 -03:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='prode' AND TABLE_NAME='__EFMigrationsHistory';
+2026-04-28 14:54:35.293 -03:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT `MigrationId`, `ProductVersion`
+FROM `__EFMigrationsHistory`
+ORDER BY `MigrationId`;
+2026-04-28 14:54:35.309 -03:00 [INF] Applying migration '20260428175419_refresh_token'.
+2026-04-28 14:54:35.389 -03:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20260428175419_refresh_token', '8.0.11');

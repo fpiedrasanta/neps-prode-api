@@ -20,5 +20,15 @@ namespace Prode.Application.Interfaces
         /// Renueva el access token usando un refresh token valido (Sliding expiration)
         /// </summary>
         Task<AuthResponseDto> RefreshTokenAsync(string refreshToken);
+
+        /// <summary>
+        /// Revoca el refresh token actual del usuario
+        /// </summary>
+        Task RevokeRefreshTokenAsync(string refreshToken, string userId);
+
+        /// <summary>
+        /// Revoca TODOS los refresh tokens activos del usuario (todos los dispositivos)
+        /// </summary>
+        Task RevokeAllUserRefreshTokensAsync(string userId);
     }
 }
