@@ -200,7 +200,7 @@ namespace Prode.Infrastructure.Services
                 RefreshToken = refreshToken,
                 Email = user.Email!,
                 FullName = user.FullName,
-                AvatarUrl = user.AvatarPath != null ? _fileService.GetAvatarUrl(user.AvatarPath).Result : string.Empty,
+                AvatarUrl = user.AvatarPath != null ? user.AvatarPath : string.Empty,
                 CountryId = user.Country?.Id ?? Guid.Empty,
                 CountryDescription = user.Country?.Name ?? string.Empty,
                 Roles = roles,
