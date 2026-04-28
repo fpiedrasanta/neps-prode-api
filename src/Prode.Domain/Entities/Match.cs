@@ -182,5 +182,10 @@ namespace Prode.Domain.Entities
         {
             return this.HomeTeam != null ? this.HomeTeam.Name : null;
         }
+
+        // Flags para notificaciones (evita envios repetidos)
+        public bool ReminderNotificationSent { get; set; } = false;
+        public bool StartedNotificationSent { get; set; } = false;
+        public bool FinishedNotificationSent { get; set; } = false;
     }
 }

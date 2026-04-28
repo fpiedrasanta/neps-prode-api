@@ -164,5 +164,17 @@ namespace Prode.Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<IEnumerable<string>> GetUserIdsWithoutPredictionForMatchAsync(Guid matchId)
+        {
+            var usersWhoPredicted = _context.Predictions
+                .Where(p => p.MatchId == matchId)
+                .Select(p => p.UserId);
+
+            return await _context.Users
+                .Where(u => !usersWhoPredicted.Contains(u.Id))
+                .Select(u => u.Id)
+                .ToListAsync();
+        }
     }
 }

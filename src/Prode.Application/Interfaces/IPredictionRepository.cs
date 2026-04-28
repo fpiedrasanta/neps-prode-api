@@ -20,5 +20,8 @@ namespace Prode.Application.Interfaces
         Task<Prediction> CreatePredictionAsync(Prediction prediction);
         Task<Prediction> UpdatePredictionAsync(Prediction prediction);
         Task<bool> DeletePredictionAsync(Guid id);
+
+        // Obtener IDs de usuarios que NO hicieron prediccion para un partido
+        Task<IEnumerable<string>> GetUserIdsWithoutPredictionForMatchAsync(Guid matchId);
     }
 }

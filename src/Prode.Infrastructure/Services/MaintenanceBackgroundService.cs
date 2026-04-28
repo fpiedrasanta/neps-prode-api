@@ -52,6 +52,18 @@ namespace Prode.Infrastructure.Services
                         // 3. Eliminar solicitudes de amistad expiradas
                         var deletedRequests = await maintenanceService.DeleteExpiredFriendRequestsAsync(_friendRequestExpirationDays);
                         _logger.LogInformation("Solicitudes de amistad expiradas eliminadas: {Count}", deletedRequests);
+
+                        // 4. Enviar recordatorios de partidos
+                        await maintenanceService.ProcessMatchRemindersAsync();
+
+                        // 5. Enviar notificaciones de partidos que empezaron
+                        await maintenanceService.ProcessMatchStartedNotificationsAsync();
+
+                        // 6. Enviar notificaciones de partidos finalizados
+                        if (pointsUpdated > 0)
+                        {
+                            await maintenanceService.ProcessMatchFinishedNotificationsAsync();
+                        }
                     }
 
                     _logger.LogInformation("Tarea de mantenimiento completada a {Time}", DateTime.UtcNow);

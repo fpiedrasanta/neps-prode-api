@@ -31,10 +31,10 @@ namespace Prode.API.Controllers
                     return NotFound("Usuario no encontrado.");
                 }
 
-                var avatarUrl = await _fileService.GetAvatarUrl(user.AvatarPath);
+                //var avatarUrl = await _fileService.GetAvatarUrl(user.AvatarPath);
                 return Ok(new AvatarResponseDto
                 {
-                    AvatarUrl = avatarUrl,
+                    AvatarUrl = user.AvatarPath,
                     Message = "Avatar obtenido exitosamente."
                 });
             }
