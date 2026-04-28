@@ -255,10 +255,11 @@ namespace Prode.API.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = secure,
+                Secure = true,
                 SameSite = SameSiteMode.Lax, // 👈 CAMBIAR ESTO
                 Expires = DateTimeOffset.UtcNow.AddDays(7),
-                Path = "/"
+                Path = "/",
+                Domain = ".neps.com.ar"
             };
 
             Response.Cookies.Append("refresh_token", refreshToken, cookieOptions);
