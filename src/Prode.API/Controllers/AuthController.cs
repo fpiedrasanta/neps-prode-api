@@ -256,7 +256,7 @@ namespace Prode.API.Controllers
             {
                 HttpOnly = true,
                 Secure = secure,
-                SameSite = isCrossSite ? SameSiteMode.None : SameSiteMode.Lax,
+                SameSite = SameSiteMode.Lax, // 👈 CAMBIAR ESTO
                 Expires = DateTimeOffset.UtcNow.AddDays(7),
                 Path = "/"
             };
