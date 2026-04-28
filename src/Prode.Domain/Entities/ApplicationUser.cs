@@ -18,8 +18,13 @@ namespace Prode.Domain.Entities
         
         public DateTime? EmailVerificationCodeExpiry { get; set; }
         
+        [Obsolete("Usar la tabla RefreshTokens en su lugar. Mantenido solo para migracion")]
         public string? RefreshToken { get; set; }
         
+        [Obsolete("Usar la tabla RefreshTokens en su lugar. Mantenido solo para migracion")]
         public DateTime RefreshTokenExpiryTime { get; set; }
+
+        // Multiples sesiones activas (multi-dispositivo)
+        public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }

@@ -7,6 +7,7 @@ using Prode.Application.Interfaces;
 using Prode.Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -21,12 +22,14 @@ namespace Prode.API.Controllers
         private readonly IAuthService _authService;
         private readonly IFileService _fileService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, IFileService fileService, UserManager<ApplicationUser> userManager)
+        public AuthController(IAuthService authService, IFileService fileService, UserManager<ApplicationUser> userManager, IConfiguration configuration)
         {
             _authService = authService;
             _fileService = fileService;
             _userManager = userManager;
+            _configuration = configuration;
         }
 
         [HttpPost("register")]
@@ -80,6 +83,8 @@ namespace Prode.API.Controllers
             try
             {
                 var result = await _authService.LoginAsync(loginDto);
+                SetRefreshTokenCookie(result.RefreshToken);
+                result.RefreshToken = null;
                 return Ok(result);
             }
             catch (Exception ex)
@@ -94,6 +99,8 @@ namespace Prode.API.Controllers
             try
             {
                 var result = await _authService.LoginWithGoogleAsync(googleLoginDto);
+                SetRefreshTokenCookie(result.RefreshToken);
+                result.RefreshToken = null;
                 return Ok(result);
             }
             catch (Exception ex)
@@ -136,6 +143,8 @@ namespace Prode.API.Controllers
             try
             {
                 var result = await _authService.VerifyEmailCodeAsync(verifyDto.Email, verifyDto.Code);
+                SetRefreshTokenCookie(result.RefreshToken);
+                result.RefreshToken = null;
                 return Ok(result);
             }
             catch (Exception ex)
@@ -190,17 +199,89 @@ namespace Prode.API.Controllers
         /// Renueva el Access Token usando un Refresh Token valido
         /// </summary>
         [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto refreshTokenDto)
+        public async Task<IActionResult> RefreshToken()
         {
             try
             {
-                var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
+                if (!Request.Cookies.TryGetValue("refresh_token", out var refreshToken))
+                    return Unauthorized();
+
+                var result = await _authService.RefreshTokenAsync(refreshToken);
+
+                SetRefreshTokenCookie(result.RefreshToken);
+                result.RefreshToken = null;
+
                 return Ok(result);
             }
             catch (Exception ex)
             {
+                Response.Cookies.Delete("refresh_token");
                 return Unauthorized(new { message = ex.Message });
             }
+        }
+
+        /// <summary>
+        /// Cierra la sesion y revoca el refresh token actual
+        /// </summary>
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            
+            if (userId == null)
+                return Unauthorized();
+
+            if (Request.Cookies.TryGetValue("refresh_token", out var refreshToken))
+            {
+                await _authService.RevokeRefreshTokenAsync(refreshToken, userId);
+            }
+            
+            // Borrar cookie
+            Response.Cookies.Delete("refresh_token");
+
+            return Ok(new { message = "Sesion cerrada correctamente" });
+        }
+
+        private void SetRefreshTokenCookie(string refreshToken)
+        {
+            var isCrossSite = _configuration.GetValue<bool>("Cookies:CrossSite");
+            var isHttps = HttpContext.Request.IsHttps;
+
+            // ✅ Regla del navegador: Si SameSite=None → Secure OBLIGATORIO sí o sí
+            // No es opcional, es un requisito del estándar
+            var secure = isCrossSite || isHttps;
+            
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = secure,
+                SameSite = isCrossSite ? SameSiteMode.None : SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddDays(7),
+                Path = "/"
+            };
+
+            Response.Cookies.Append("refresh_token", refreshToken, cookieOptions);
+        }
+
+        /// <summary>
+        /// Cierra TODAS las sesiones del usuario en todos los dispositivos
+        /// </summary>
+        [HttpPost("logout-all")]
+        [Authorize]
+        public async Task<IActionResult> LogoutAll()
+        {
+            var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            
+            if (userId == null)
+                return Unauthorized();
+
+            // Revocar TODOS los tokens activos del usuario
+            await _authService.RevokeAllUserRefreshTokensAsync(userId);
+            
+            Response.Cookies.Delete("refresh_token");
+
+            return Ok(new { message = "Todas las sesiones han sido cerradas" });
         }
     }
 }

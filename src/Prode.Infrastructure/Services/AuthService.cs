@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Prode.Infrastructure.Data;
 using Prode.Application.DTOs;
 using Prode.Application.Interfaces;
 using Prode.Domain.Entities;
@@ -22,19 +24,25 @@ namespace Prode.Infrastructure.Services
         private readonly ICountryRepository _countryRepository;
         private readonly IFileService _fileService;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ApplicationDbContext _dbContext;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthService(
             UserManager<ApplicationUser> userManager, 
             IConfiguration configuration, 
             ICountryRepository countryRepository,
             IFileService fileService,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            ApplicationDbContext dbContext,
+            IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _configuration = configuration;
             _countryRepository = countryRepository;
             _fileService = fileService;
             _serviceProvider = serviceProvider;
+            _dbContext = dbContext;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
@@ -133,6 +141,9 @@ namespace Prode.Infrastructure.Services
                 throw new Exception("Debe verificar su correo electrónico antes de iniciar sesión");
             }
 
+            // Asignar puntos a predicciones sin calificar en segundo plano
+            _ = AssignResultTypesToUserPredictionsAsync(user.Id);
+            
             // Generar respuesta completa con Access Token + Refresh Token
             return await GenerateAuthResponseAsync(user);
         }
@@ -176,20 +187,53 @@ namespace Prode.Infrastructure.Services
 
         private string GenerateRefreshToken()
         {
-            var randomNumber = new byte[32];
+            var randomNumber = new byte[64];
             using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
             rng.GetBytes(randomNumber);
             return Convert.ToBase64String(randomNumber);
+        }
+
+        private static string HashRefreshToken(string token)
+        {
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var bytes = System.Text.Encoding.UTF8.GetBytes(token);
+            var hash = sha256.ComputeHash(bytes);
+            return Convert.ToBase64String(hash);
         }
         
         private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user)
         {
             var token = await GenerateJwtTokenAsync(user);
-            
-            // Sliding Expiration: 7 dias a partir de AHORA
             var refreshToken = GenerateRefreshToken();
+            var tokenHash = HashRefreshToken(refreshToken);
+
+            // Obtener metadata de la solicitud
+            var ipAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+            var userAgent = _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"].ToString();
+            
+            // Sanitizar User-Agent: truncar a 1000 caracteres máximo
+            if (!string.IsNullOrEmpty(userAgent) && userAgent.Length > 1000)
+            {
+                userAgent = userAgent.Substring(0, 1000);
+            }
+
+            // Crear nuevo refresh token en la tabla nueva
+            var newRefreshToken = new RefreshToken
+            {
+                UserId = user.Id,
+                TokenHash = tokenHash,
+                ExpirationDate = DateTime.UtcNow.AddDays(7),
+                CreatedByIp = ipAddress,
+                UserAgent = userAgent
+            };
+
+            _dbContext.RefreshTokens.Add(newRefreshToken);
+            await _dbContext.SaveChangesAsync();
+
+            // Mantener compatibilidad hacia atras (MIGRACION AUTOMATICA)
+            // Este campo se borra cuando todos los usuarios hayan migrado
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenExpiryTime = newRefreshToken.ExpirationDate;
             await _userManager.UpdateAsync(user);
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -449,16 +493,14 @@ namespace Prode.Infrastructure.Services
 
         private string GenerateResetCode()
         {
-            // Generar código de 6 dígitos
-            var random = new Random();
-            return random.Next(100000, 999999).ToString();
+            // Generar código de 6 dígitos de forma segura
+            return System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999).ToString();
         }
         
         private string GenerateVerificationCode()
         {
-            // Generar código de 6 dígitos para verificación de correo
-            var random = new Random();
-            return random.Next(100000, 999999).ToString();
+            // Generar código de 6 dígitos para verificación de correo de forma segura
+            return System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999).ToString();
         }
         
         private async Task SendEmailVerificationCodeAsync(string email, string code)
@@ -700,6 +742,44 @@ namespace Prode.Infrastructure.Services
         
         public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)
         {
+            var tokenHash = HashRefreshToken(refreshToken);
+
+            // Buscar token en la tabla nueva PRIMERO
+            var storedToken = await _dbContext.RefreshTokens
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.TokenHash == tokenHash);
+
+            if (storedToken != null)
+            {
+                // ✅ Token del nuevo sistema
+
+                if (!storedToken.IsActive)
+                {
+                    // 🔥 DETECCION DE REUSE - TOKEN YA FUE USADO O REVOCADO
+                    // Invalidar TODAS las sesiones de este usuario
+                    var allUserTokens = await _dbContext.RefreshTokens
+                        .Where(r => r.UserId == storedToken.UserId && r.IsActive)
+                        .ToListAsync();
+
+                    foreach (var token in allUserTokens)
+                    {
+                        token.RevokedAt = DateTime.UtcNow;
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+
+                    throw new Exception("Token comprometido. Todas las sesiones han sido cerradas.");
+                }
+
+                // ✅ ROTACION DE TOKENS
+                // Revocar el token actual
+                storedToken.RevokedAt = DateTime.UtcNow;
+
+                // Generar y devolver NUEVO token
+                return await GenerateAuthResponseAsync(storedToken.User);
+            }
+
+            // ❗️ Token no encontrado en tabla nueva: MIGRACION AUTOMATICA
             var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
             
             if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
@@ -715,8 +795,54 @@ namespace Prode.Infrastructure.Services
                 }
             }
 
-            // Sliding expiration: renovar el refresh token tambien por otros 7 dias
+            // Migrar usuario al nuevo sistema automaticamente
             return await GenerateAuthResponseAsync(user);
+        }
+
+        public async Task RevokeRefreshTokenAsync(string refreshToken, string userId)
+        {
+            var tokenHash = HashRefreshToken(refreshToken);
+
+            var storedToken = await _dbContext.RefreshTokens
+                .FirstOrDefaultAsync(r => r.TokenHash == tokenHash && r.UserId == userId && r.IsActive);
+
+            if (storedToken != null)
+            {
+                storedToken.RevokedAt = DateTime.UtcNow;
+                await _dbContext.SaveChangesAsync();
+            }
+
+            // Mantener compatibilidad hacia atras
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null && user.RefreshToken == refreshToken)
+            {
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = DateTime.MinValue;
+                await _userManager.UpdateAsync(user);
+            }
+        }
+
+        public async Task RevokeAllUserRefreshTokensAsync(string userId)
+        {
+            var activeTokens = await _dbContext.RefreshTokens
+                .Where(r => r.UserId == userId && r.IsActive)
+                .ToListAsync();
+
+            foreach (var token in activeTokens)
+            {
+                token.RevokedAt = DateTime.UtcNow;
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            // Mantener compatibilidad hacia atras
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null)
+            {
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = DateTime.MinValue;
+                await _userManager.UpdateAsync(user);
+            }
         }
     }
 }

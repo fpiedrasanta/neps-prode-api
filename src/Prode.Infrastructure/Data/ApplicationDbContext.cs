@@ -30,10 +30,20 @@ namespace Prode.Infrastructure.Data
         public DbSet<Post> Posts { get; set; } = null!;
         public DbSet<Comment> Comments { get; set; } = null!;
         public DbSet<UserPushSubscription> UserPushSubscriptions { get; set; } = null!;
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Indice unico para el hash del token
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(r => r.TokenHash)
+                .IsUnique();
+
+            // Indice para busquedas por usuario
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(r => r.UserId);
         }
     }
 }
