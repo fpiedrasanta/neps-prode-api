@@ -256,10 +256,8 @@ namespace Prode.API.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.None,
-                Domain = ".neps.com.ar",
-                Path = "/",
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
+                SameSite = SameSiteMode.Lax,
+                Path = "/"
             };
 
             Response.Cookies.Append("refresh_token", refreshToken, cookieOptions);
