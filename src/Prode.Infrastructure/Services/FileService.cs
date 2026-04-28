@@ -10,11 +10,11 @@ namespace Prode.Infrastructure.Services
     {
         private readonly string _avatarsPath;
         private readonly string _flagsPath;
-        private readonly string _baseUrl;
+        //private readonly string _baseUrl;
 
         public FileService(IConfiguration configuration)
         {
-            _baseUrl = configuration["AppSettings:BaseUrl"] ?? "http://localhost:5000";
+            //_baseUrl = configuration["AppSettings:BaseUrl"] ?? "http://localhost:5000";
             
             // Crear carpeta de avatares si no existe
             _avatarsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
@@ -69,7 +69,7 @@ namespace Prode.Infrastructure.Services
             }
         }
 
-        public Task<string> GetAvatarUrl(string fileName)
+        /*public Task<string> GetAvatarUrl(string fileName)
         {
             if (string.IsNullOrEmpty(fileName))
             {
@@ -77,7 +77,7 @@ namespace Prode.Infrastructure.Services
             }
 
             return Task.FromResult($"{_baseUrl}/uploads/avatars/{fileName}");
-        }
+        }*/
 
         public async Task<bool> DeleteAvatarAsync(string fileName)
         {
