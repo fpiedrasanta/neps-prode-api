@@ -112,4 +112,54 @@ public class WebPushNotificationService : IPushNotificationService
         return await _userPushSubscriptionRepository.ExistsForUserAndEndpointAsync(userId, endpoint);
     }
 
+    public async Task SendNotificationToAllUsersAsync(string title, string body, object? data = null)
+    {
+        var allSubscriptions = await _userPushSubscriptionRepository.GetAllAsync();
+
+        foreach (var subscription in allSubscriptions)
+        {
+            try
+            {
+                await SendNotificationAsync(new Prode.Application.Interfaces.PushSubscription
+                {
+                    Endpoint = subscription.Endpoint,
+                    Keys = new PushSubscriptionKeys
+                    {
+                        P256dh = subscription.P256dh,
+                        Auth = subscription.Auth
+                    }
+                }, title, body, data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo enviar notificacion a endpoint {Endpoint}", subscription.Endpoint);
+            }
+        }
+    }
+
+    public async Task SendNotificationToUsersAsync(IEnumerable<string> userIds, string title, string body, object? data = null)
+    {
+        var subscriptions = await _userPushSubscriptionRepository.GetByUserIdsAsync(userIds);
+
+        foreach (var subscription in subscriptions)
+        {
+            try
+            {
+                await SendNotificationAsync(new Prode.Application.Interfaces.PushSubscription
+                {
+                    Endpoint = subscription.Endpoint,
+                    Keys = new PushSubscriptionKeys
+                    {
+                        P256dh = subscription.P256dh,
+                        Auth = subscription.Auth
+                    }
+                }, title, body, data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo enviar notificacion al usuario {UserId}", subscription.UserId);
+            }
+        }
+    }
+
 }

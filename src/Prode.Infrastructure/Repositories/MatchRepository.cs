@@ -162,6 +162,42 @@ namespace Prode.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Match>> GetMatchesForReminderAsync(int minutesBefore)
+        {
+            var targetTime = DateTime.UtcNow.AddMinutes(minutesBefore);
+            return await _context.Matches
+                .Include(m => m.HomeTeam)
+                .Include(m => m.AwayTeam)
+                .Where(m => m.MatchDate >= targetTime.AddSeconds(-30) 
+                         && m.MatchDate <= targetTime.AddSeconds(30)
+                         && !m.ReminderNotificationSent
+                         && m.IsActive)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Match>> GetMatchesJustStartedAsync()
+        {
+            return await _context.Matches
+                .Include(m => m.HomeTeam)
+                .Include(m => m.AwayTeam)
+                .Where(m => m.MatchDate >= DateTime.UtcNow.AddSeconds(-60) 
+                         && !m.StartedNotificationSent
+                         && m.IsActive)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Match>> GetMatchesJustFinishedAsync()
+        {
+            return await _context.Matches
+                .Include(m => m.HomeTeam)
+                .Include(m => m.AwayTeam)
+                .Where(m => m.HomeScore.HasValue 
+                         && m.AwayScore.HasValue
+                         && !m.FinishedNotificationSent
+                         && m.IsActive)
+                .ToListAsync();
+        }
+
         private string CalculateResultTypeName(int predictedHome, int predictedAway, int actualHome, int actualAway)
         {
             // Exacto: acertó resultado y goles exactos

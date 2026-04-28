@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Prode.Application.Interfaces;
 using Prode.Domain.Entities;
 
@@ -9,17 +10,23 @@ namespace Prode.Infrastructure.Services
         private readonly IFriendshipRepository _friendshipRepository;
         private readonly IMatchRepository _matchRepository;
         private readonly IPostRepository _postRepository;
+        private readonly IPushNotificationService _pushNotificationService;
+        private readonly IConfiguration _configuration;
 
         public MaintenanceService(
             IPredictionRepository predictionRepository,
             IFriendshipRepository friendshipRepository,
             IMatchRepository matchRepository,
-            IPostRepository postRepository)
+            IPostRepository postRepository,
+            IPushNotificationService pushNotificationService,
+            IConfiguration configuration)
         {
             _predictionRepository = predictionRepository;
             _friendshipRepository = friendshipRepository;
             _matchRepository = matchRepository;
             _postRepository = postRepository;
+            _pushNotificationService = pushNotificationService;
+            _configuration = configuration;
         }
 
         public async Task<int> CalculatePointsForFinishedMatchesAsync()
@@ -135,7 +142,7 @@ Pronóstico: {prediction.HomeGoals} - {prediction.AwayGoals}";
             bool predictedDraw = predictedHome == predictedAway;
 
             bool actualHomeWins = actualHome > actualAway;
-            bool actualAwayWins = actualAway > actualHome;
+            bool actualAwayWins = actualHome > actualAway;
             bool actualDraw = actualHome == actualAway;
 
             // Verificar si acertó el resultado
@@ -160,6 +167,69 @@ Pronóstico: {prediction.HomeGoals} - {prediction.AwayGoals}";
 
             // Error: no acertó resultado
             return "Error";
+        }
+
+        public async Task ProcessMatchRemindersAsync()
+        {
+            int minutesBeforeLock = _configuration.GetValue<int>("MatchSettings:MinutesBeforeMatchToLock", 15);
+            int reminderMinutesBefore = minutesBeforeLock + 15;
+
+            var matches = await _matchRepository.GetMatchesForReminderAsync(reminderMinutesBefore);
+
+            foreach (var match in matches)
+            {
+                if (match.ReminderNotificationSent) continue;
+
+                var userIdsWithoutPrediction = await _predictionRepository.GetUserIdsWithoutPredictionForMatchAsync(match.Id);
+                
+                if (userIdsWithoutPrediction.Any())
+                {
+                    await _pushNotificationService.SendNotificationToUsersAsync(
+                        userIdsWithoutPrediction,
+                        "⏰ ¡Ultimo llamado!",
+                        $"Faltan {reminderMinutesBefore} minutos para cerrar las apuestas. ¿Ya hiciste tu pronóstico?"
+                    );
+                }
+
+                match.ReminderNotificationSent = true;
+                await _matchRepository.UpdateMatchAsync(match);
+            }
+        }
+
+        public async Task ProcessMatchStartedNotificationsAsync()
+        {
+            var matches = await _matchRepository.GetMatchesJustStartedAsync();
+
+            foreach (var match in matches)
+            {
+                if (match.StartedNotificationSent) continue;
+
+                await _pushNotificationService.SendNotificationToAllUsersAsync(
+                    "⚽ ¡El partido empezo!",
+                    $"{match.GetHomeTeamName()} vs {match.GetAwayTeamName()} ya esta en curso"
+                );
+
+                match.StartedNotificationSent = true;
+                await _matchRepository.UpdateMatchAsync(match);
+            }
+        }
+
+        public async Task ProcessMatchFinishedNotificationsAsync()
+        {
+            var matches = await _matchRepository.GetMatchesJustFinishedAsync();
+
+            foreach (var match in matches)
+            {
+                if (match.FinishedNotificationSent) continue;
+
+                await _pushNotificationService.SendNotificationToAllUsersAsync(
+                    "🎉 Resultados listos!",
+                    "Ya finalizaron los partidos, mira como quedaron!"
+                );
+
+                match.FinishedNotificationSent = true;
+                await _matchRepository.UpdateMatchAsync(match);
+            }
         }
     }
 }

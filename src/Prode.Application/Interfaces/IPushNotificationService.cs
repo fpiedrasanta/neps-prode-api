@@ -26,6 +26,16 @@ public interface IPushNotificationService
     /// Verifica si un usuario ya esta suscrito a un endpoint
     /// </summary>
     Task<bool> IsSubscribedAsync(string userId, string endpoint);
+
+    /// <summary>
+    /// Envia notificacion a TODOS los usuarios suscriptos
+    /// </summary>
+    Task SendNotificationToAllUsersAsync(string title, string body, object? data = null);
+
+    /// <summary>
+    /// Envia notificacion a una lista especifica de usuarios
+    /// </summary>
+    Task SendNotificationToUsersAsync(IEnumerable<string> userIds, string title, string body, object? data = null);
 }
 
 /// <summary>

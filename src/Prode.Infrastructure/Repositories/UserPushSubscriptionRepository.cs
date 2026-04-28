@@ -37,4 +37,16 @@ public class UserPushSubscriptionRepository : IUserPushSubscriptionRepository
         return await _dbContext.UserPushSubscriptions
             .AnyAsync(x => x.UserId == userId && x.Endpoint == endpoint);
     }
+
+    public async Task<IEnumerable<UserPushSubscription>> GetAllAsync()
+    {
+        return await _dbContext.UserPushSubscriptions.ToListAsync();
+    }
+
+    public async Task<IEnumerable<UserPushSubscription>> GetByUserIdsAsync(IEnumerable<string> userIds)
+    {
+        return await _dbContext.UserPushSubscriptions
+            .Where(s => userIds.Contains(s.UserId))
+            .ToListAsync();
+    }
 }
