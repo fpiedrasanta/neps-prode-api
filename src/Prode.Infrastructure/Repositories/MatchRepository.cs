@@ -180,7 +180,7 @@ namespace Prode.Infrastructure.Repositories
             return await _context.Matches
                 .Include(m => m.HomeTeam)
                 .Include(m => m.AwayTeam)
-                .Where(m => m.MatchDate >= DateTime.UtcNow.AddSeconds(-60) 
+                .Where(m => m.MatchDate <= DateTime.UtcNow 
                          && !m.StartedNotificationSent
                          && m.IsActive)
                 .ToListAsync();
