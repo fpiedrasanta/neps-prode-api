@@ -258,7 +258,8 @@ namespace Prode.API.Controllers
                 Secure = true,
                 SameSite = SameSiteMode.None, // 🔥 ESTE ES EL FIX
                 Path = "/",
-                Domain = ".neps.com.ar" // ✅ DEJARLO
+                Domain = ".neps.com.ar", // ✅ DEJARLO
+                MaxAge = TimeSpan.FromDays(7) // 🔥 CLAVE: persistencia
             };
 
             Response.Cookies.Append("refresh_token", refreshToken, cookieOptions);
