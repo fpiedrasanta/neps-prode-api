@@ -36,14 +36,11 @@ public class WebPushNotificationService : IPushNotificationService
     {
         var payload = new
         {
-            notification = new
-            {
-                title,
-                body,
-                icon = "/icons/icon-192x192.png",
-                badge = "/icons/badge-72x72.png",
-                data = data ?? new { }
-            }
+            title,
+            body,
+            icon = "/icons/icon-192x192.png",
+            badge = "/icons/badge-72x72.png",
+            data = data ?? new { }
         };
 
         var pushSubscription = new WebPush.PushSubscription(
