@@ -186,7 +186,7 @@ Pronóstico: {prediction.HomeGoals} - {prediction.AwayGoals}";
                 {
                     await _pushNotificationService.SendNotificationToUsersAsync(
                         userIdsWithoutPrediction,
-                        "⏰ ¡Ultimo llamado!",
+                        $"⏰ {match.GetHomeTeamName()} vs {match.GetAwayTeamName()}",
                         $"Faltan {reminderMinutesBefore} minutos para cerrar las apuestas. ¿Ya hiciste tu pronóstico?"
                     );
                 }
