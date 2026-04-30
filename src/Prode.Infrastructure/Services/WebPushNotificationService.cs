@@ -49,7 +49,31 @@ public class WebPushNotificationService : IPushNotificationService
             auth: subscription.Keys.Auth
         );
 
-        await _webPushClient.SendNotificationAsync(pushSubscription, System.Text.Json.JsonSerializer.Serialize(payload));
+        try
+        {
+            await _webPushClient.SendNotificationAsync(pushSubscription, System.Text.Json.JsonSerializer.Serialize(payload));
+        }
+        catch (WebPushException ex)
+        {
+            _logger.LogWarning(ex, $"No se pudo enviar notificacion al endpoint {subscription.Endpoint}");
+
+            // 🔥 Limpiar automaticamente suscripciones invalidas, expiradas o desuscritas
+            if (ex.Message.Contains("no longer valid", StringComparison.OrdinalIgnoreCase) ||
+                ex.Message.Contains("expired", StringComparison.OrdinalIgnoreCase) ||
+                ex.Message.Contains("unsubscribed", StringComparison.OrdinalIgnoreCase) ||
+                ex.Message.Contains("not registered", StringComparison.OrdinalIgnoreCase) ||
+                ex.StatusCode == System.Net.HttpStatusCode.Gone)
+            {
+                _logger.LogInformation("🗑️ Eliminando suscripcion invalida: {Endpoint}", subscription.Endpoint);
+                await UnsubscribeAsync(subscription);
+            }
+            
+            // Re-lanzar solo si NO es un error de suscripcion invalida, para que el llamador pueda manejar otros errores
+            if (ex.StatusCode != System.Net.HttpStatusCode.Gone)
+            {
+                throw;
+            }
+        }
     }
 
     public string GetVapidPublicKey()
