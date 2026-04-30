@@ -175,6 +175,7 @@ public class WebPushNotificationService : IPushNotificationService
                         Auth = subscription.Auth
                     }
                 }, title, body, data);
+                _logger.LogWarning("No notificación enviada al usuario {UserId}", subscription.UserId);
             }
             catch (Exception ex)
             {
