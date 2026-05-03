@@ -142,17 +142,16 @@ Pronóstico: {prediction.HomeGoals} - {prediction.AwayGoals}";
             bool predictedDraw = predictedHome == predictedAway;
 
             bool actualHomeWins = actualHome > actualAway;
-            bool actualAwayWins = actualHome > actualAway;
+            bool actualAwayWins = actualAway > actualHome; // <-- FIX
             bool actualDraw = actualHome == actualAway;
 
             // Verificar si acertó el resultado
-            bool acertóResultado = (predictedHomeWins && actualHomeWins) ||
-                                  (predictedAwayWins && actualAwayWins) ||
-                                  (predictedDraw && actualDraw);
+            bool acertoResultado = (predictedHomeWins && actualHomeWins) ||
+                                (predictedAwayWins && actualAwayWins) ||
+                                (predictedDraw && actualDraw);
 
-            if (acertóResultado)
+            if (acertoResultado)
             {
-                // Parcial Fuerte: acertó resultado y diferencia de goles
                 int predictedDiff = predictedHome - predictedAway;
                 int actualDiff = actualHome - actualAway;
 
@@ -161,11 +160,9 @@ Pronóstico: {prediction.HomeGoals} - {prediction.AwayGoals}";
                     return "Parcial Fuerte";
                 }
 
-                // Parcial Débil: solo acertó resultado
                 return "Parcial Débil";
             }
 
-            // Error: no acertó resultado
             return "Error";
         }
 
