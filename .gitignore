@@ -46,6 +46,9 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Logs Serilog
+src/Prode.API/logs/
+
 # Node.js (si se usa para frontend dentro del proyecto)
 node_modules/
 #dist/
