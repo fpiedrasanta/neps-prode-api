@@ -10,6 +10,7 @@ namespace Prode.Infrastructure.Services
     {
         private readonly string _avatarsPath;
         private readonly string _flagsPath;
+        private readonly string _imagesPath;
         //private readonly string _baseUrl;
 
         public FileService(IConfiguration configuration)
@@ -28,6 +29,13 @@ namespace Prode.Infrastructure.Services
             if (!Directory.Exists(_flagsPath))
             {
                 Directory.CreateDirectory(_flagsPath);
+            }
+            
+            // Crear carpeta de imagenes generales si no existe
+            _imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "images");
+            if (!Directory.Exists(_imagesPath))
+            {
+                Directory.CreateDirectory(_imagesPath);
             }
         }
 
@@ -182,6 +190,78 @@ namespace Prode.Infrastructure.Services
             
             // Generar nombre único: flag_timestamp_random.ext
             return $"flag_{timestamp}_{random}{fileExtension}";
+        }
+        
+        public string GenerateUniqueFileName(string originalFileName)
+        {
+            var fileExtension = Path.GetExtension(originalFileName);
+            var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            var random = new Random().Next(1000, 9999);
+            
+            // Generar nombre único: img_timestamp_random.ext
+            return $"img_{timestamp}_{random}{fileExtension}";
+        }
+        
+        public async Task<(string FileName, string Url)> SaveImageAsync(Stream fileStream, string originalFileName)
+        {
+            try
+            {
+                // Validar tamaño del archivo (máximo 5MB)
+                if (fileStream.Length > 5 * 1024 * 1024)
+                {
+                    throw new ArgumentException("El archivo es demasiado grande. El tamaño máximo es 5MB.");
+                }
+
+                // Validar tipo de archivo
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var fileExtension = Path.GetExtension(originalFileName).ToLower();
+                
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    throw new ArgumentException("Formato de archivo no permitido. Solo se permiten: JPG, JPEG, PNG, GIF, WEBP.");
+                }
+
+                // Generar nombre único para el archivo
+                var uniqueFileName = GenerateUniqueFileName(originalFileName);
+                var filePath = Path.Combine(_imagesPath, uniqueFileName);
+
+                // Guardar el archivo
+                using (var fileStreamOutput = new FileStream(filePath, FileMode.Create))
+                {
+                    await fileStream.CopyToAsync(fileStreamOutput);
+                }
+
+                // Retornar nombre de archivo y URL relativa
+                return (uniqueFileName, $"/uploads/images/{uniqueFileName}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al guardar la imagen: {ex.Message}");
+            }
+        }
+        
+        public async Task<bool> DeleteImageAsync(string fileName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(fileName))
+                {
+                    return false;
+                }
+
+                var filePath = Path.Combine(_imagesPath, fileName);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }

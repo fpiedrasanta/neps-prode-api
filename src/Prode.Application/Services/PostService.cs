@@ -1,6 +1,7 @@
 using Prode.Application.DTOs;
 using Prode.Application.Interfaces;
 using Prode.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace Prode.Application.Services
 {
@@ -8,11 +9,19 @@ namespace Prode.Application.Services
     {
         private readonly IPostRepository _postRepository;
         private readonly IFriendshipService _friendshipService;
+        private readonly IPushNotificationService _pushNotificationService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public PostService(IPostRepository postRepository, IFriendshipService friendshipService)
+        public PostService(
+            IPostRepository postRepository,
+            IFriendshipService friendshipService,
+            IPushNotificationService pushNotificationService,
+            UserManager<ApplicationUser> userManager)
         {
             _postRepository = postRepository;
             _friendshipService = friendshipService;
+            _pushNotificationService = pushNotificationService;
+            _userManager = userManager;
         }
 
         public async Task<(List<PostDto> Posts, int TotalCount, int TotalPages)> GetPostsAsync(int pageNumber, int pageSize, string currentUserId)
@@ -24,12 +33,23 @@ namespace Prode.Application.Services
             // Incluir tambien los propios posts del usuario
             friendIds.Add(currentUserId);
 
-            var (posts, totalCount) = await _postRepository.GetPostsByUsersAsync(friendIds, pageNumber, pageSize);
-            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            // Obtener posts normales de amigos + propios
+            var (friendsPosts, friendsTotalCount) = await _postRepository.GetPostsByUsersAsync(friendIds, pageNumber, pageSize);
+            
+            // Obtener posts especiales globales
+            var specialPosts = await _postRepository.GetSpecialPostsAsync();
 
-            var postDtos = posts.Select(MapToDto).ToList();
+            // Unir y ordenar por fecha descendente
+            var allPosts = friendsPosts.Concat(specialPosts)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToList();
 
-            return (postDtos, totalCount, totalPages);
+            var totalPages = (int)Math.Ceiling(allPosts.Count / (double)pageSize);
+            var pagedPosts = allPosts.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            var postDtos = pagedPosts.Select(MapToDto).ToList();
+
+            return (postDtos, allPosts.Count, totalPages);
         }
 
         public async Task<PostDto?> GetPostByIdAsync(Guid id)
@@ -41,6 +61,43 @@ namespace Prode.Application.Services
             }
 
             return MapToDto(post);
+        }
+
+        public async Task<PostDto?> UpdateSpecialPostAsync(Guid postId, string title, string content)
+        {
+            var post = await _postRepository.GetPostByIdWithCommentsAsync(postId);
+            
+            if (post == null || !post.IsSpecialPost)
+                return null;
+
+            post.Title = title;
+            post.Content = content;
+            post.UpdatedAt = DateTime.UtcNow;
+
+            await _postRepository.UpdatePostAsync(post);
+
+            return MapToDto(post);
+        }
+
+        public async Task<bool> DeleteSpecialPostAsync(Guid postId)
+        {
+            var post = await _postRepository.GetPostByIdWithCommentsAsync(postId);
+            
+            if (post == null || !post.IsSpecialPost)
+                return false;
+
+            await _postRepository.DeletePostAsync(postId);
+            return true;
+        }
+
+        public async Task<(List<PostDto> Posts, int TotalCount, int TotalPages)> GetAllSpecialPostsAsync(int pageNumber, int pageSize, string? search)
+        {
+            var (posts, totalCount) = await _postRepository.GetAllSpecialPostsPagedAsync(pageNumber, pageSize, search);
+            
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var postDtos = posts.Select(MapToDto).ToList();
+
+            return (postDtos, totalCount, totalPages);
         }
 
         public async Task<CommentDto> AddCommentAsync(Guid postId, string userId, string content)
@@ -65,6 +122,25 @@ namespace Prode.Application.Services
             var createdComment = await _postRepository.GetCommentsByPostIdAsync(postId)
                 .ContinueWith(t => t.Result.LastOrDefault());
 
+            // 📩 Notificación push al dueño del post
+            if (createdComment != null && post.UserId != null && post.UserId != userId)
+            {
+                var userComment = await _userManager.FindByIdAsync(userId);
+                if (userComment != null)
+                {
+                    var matchInfo = post.Match != null 
+                        ? $"en {post.Match.HomeTeam?.Name} vs {post.Match.AwayTeam?.Name}" 
+                        : "";
+
+                    await _pushNotificationService.SendNotificationToUsersAsync(
+                        new[] { post.UserId },
+                        "💬 Nuevo comentario",
+                        $"{userComment.FullName} comentó en tú post {matchInfo}: {content}",
+                        new { click_action = "/feed" }
+                    );
+                }
+            }
+
             if (createdComment == null)
             {
                 throw new Exception("Error al crear el comentario");
@@ -81,14 +157,53 @@ namespace Prode.Application.Services
             };
         }
 
+        public async Task<PostDto> CreateSpecialPostAsync(string title, string content)
+        {
+            var post = new Post
+            {
+                IsSpecialPost = true,
+                Title = title,
+                Content = content,
+                CreatedAt = DateTime.UtcNow,
+                UserId = null,
+                MatchId = null,
+                PredictionId = null
+            };
+
+            await _postRepository.CreatePostAsync(post);
+
+            // 📩 Notificación push a todos los amigos del usuario
+            if (post.UserId != null)
+            {
+                var userPost = await _userManager.FindByIdAsync(post.UserId);
+                var summary = await _friendshipService.GetFriendshipSummaryAsync(post.UserId);
+                var friendIds = summary.Friends.Select(f => f.FriendId);
+
+                if (userPost != null && friendIds.Any())
+                {
+                    await _pushNotificationService.SendNotificationToUsersAsync(
+                        friendIds,
+                        "📝 Nuevo posteo",
+                        $"{userPost.FullName} hizo un nuevo posteo.",
+                        new { click_action = "/feed" }
+                    );
+                }
+            }
+
+            return MapToDto(post);
+        }
+
         private PostDto MapToDto(Post post)
         {
             return new PostDto
             {
                 Id = post.Id,
                 UserId = post.UserId,
-                UserFullName = post.User?.FullName ?? string.Empty,
+                UserFullName = post.User?.FullName,
                 UserAvatarUrl = post.User?.AvatarPath,
+
+                IsSpecialPost = post.IsSpecialPost,
+                Title = post.Title,
                 
                 MatchId = post.MatchId,
                 HomeTeamName = post.Match?.HomeTeam?.Name ?? string.Empty,

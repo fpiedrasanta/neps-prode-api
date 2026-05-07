@@ -1,17 +1,25 @@
 using Prode.Application.DTOs;
 using Prode.Application.Interfaces;
 using Prode.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace Prode.Application.Services
 {
     public class FriendshipService : IFriendshipService
     {
         private readonly IFriendshipRepository _friendshipRepository;
+        private readonly IPushNotificationService _pushNotificationService;
+        private readonly UserManager<ApplicationUser> _userManager;
         private const int MaxFriends = 5;
 
-        public FriendshipService(IFriendshipRepository friendshipRepository)
+        public FriendshipService(
+            IFriendshipRepository friendshipRepository,
+            IPushNotificationService pushNotificationService,
+            UserManager<ApplicationUser> userManager)
         {
             _friendshipRepository = friendshipRepository;
+            _pushNotificationService = pushNotificationService;
+            _userManager = userManager;
         }
 
         public async Task<FriendshipSummaryDto> GetFriendshipSummaryAsync(string userId)
@@ -106,6 +114,19 @@ namespace Prode.Application.Services
 
             // Crear nueva solicitud
             var newFriendship = await _friendshipRepository.CreateFriendRequestAsync(currentUserId.ToString(), targetUserId.ToString());
+
+            // 📩 Notificación push al usuario que recibe la solicitud
+            var currentUser = await _userManager.FindByIdAsync(currentUserId);
+            if (currentUser != null)
+            {
+                await _pushNotificationService.SendNotificationToUsersAsync(
+                    new[] { targetUserId.ToString() },
+                    "👋 Nueva solicitud de amistad",
+                    $"{currentUser.FullName} te está solicitando amistad",
+                    new { click_action = "/friends" }
+                );
+            }
+
             return MapToDto(newFriendship, currentUserId.ToString());
         }
 
@@ -132,6 +153,18 @@ namespace Prode.Application.Services
             }
 
             await _friendshipRepository.AcceptFriendRequestAsync(friendshipId);
+
+            // 📩 Notificación push al usuario que envió la solicitud
+            var currentUser = await _userManager.FindByIdAsync(currentUserId);
+            if (currentUser != null)
+            {
+                await _pushNotificationService.SendNotificationToUsersAsync(
+                    new[] { friendship.RequesterId },
+                    "✅ Solicitud aceptada!",
+                    $"Ahora ya son amigos con {currentUser.FullName}",
+                    new { click_action = "/friends" }
+                );
+            }
         }
 
         public async Task DeclineFriendRequestAsync(string currentUserId, Guid friendshipId)

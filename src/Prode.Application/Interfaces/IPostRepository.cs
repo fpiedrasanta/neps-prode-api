@@ -22,5 +22,17 @@ namespace Prode.Application.Interfaces
         
         // Verificar si existe post para una predicción
         Task<bool> ExistsPostForPredictionAsync(Guid predictionId);
+
+        // Obtener posts especiales globales
+        Task<List<Post>> GetSpecialPostsAsync();
+
+        // Actualizar post existente
+        Task UpdatePostAsync(Post post);
+
+        // Eliminar post por ID
+        Task DeletePostAsync(Guid postId);
+
+        // Listar Posts Especiales paginados con filtro de busqueda
+        Task<(List<Post> Posts, int TotalCount)> GetAllSpecialPostsPagedAsync(int pageNumber, int pageSize, string? search);
     }
 }

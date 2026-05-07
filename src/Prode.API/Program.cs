@@ -147,6 +147,8 @@ builder.Services.AddScoped<IFriendshipRepository, FriendshipRepository>();
 // 🔹 Posts
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IImageRepository, ImageRepository>();
 
 // 🔹 Maintenance
 builder.Services.AddScoped<IMaintenanceService, MaintenanceService>();

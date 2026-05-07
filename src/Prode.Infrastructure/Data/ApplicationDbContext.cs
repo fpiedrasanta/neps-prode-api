@@ -31,6 +31,7 @@ namespace Prode.Infrastructure.Data
         public DbSet<Comment> Comments { get; set; } = null!;
         public DbSet<UserPushSubscription> UserPushSubscriptions { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+        public DbSet<Image> Images { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

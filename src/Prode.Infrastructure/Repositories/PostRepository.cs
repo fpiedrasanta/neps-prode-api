@@ -104,5 +104,55 @@ namespace Prode.Infrastructure.Repositories
             return await _context.Posts
                 .AnyAsync(p => p.PredictionId == predictionId);
         }
+
+        public async Task<List<Post>> GetSpecialPostsAsync()
+        {
+            return await _context.Posts
+                .Include(p => p.Comments)
+                .Where(p => p.IsSpecialPost)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task UpdatePostAsync(Post post)
+        {
+            _context.Posts.Update(post);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeletePostAsync(Guid postId)
+        {
+            var post = await _context.Posts.FindAsync(postId);
+            if (post != null)
+            {
+                _context.Posts.Remove(post);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<(List<Post> Posts, int TotalCount)> GetAllSpecialPostsPagedAsync(int pageNumber, int pageSize, string? search)
+        {
+            var query = _context.Posts
+                .Where(p => p.IsSpecialPost)
+                .AsQueryable();
+
+            // Filtro de busqueda por título o contenido
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(p => 
+                    EF.Functions.Like(p.Title, $"%{search}%") || 
+                    EF.Functions.Like(p.Content, $"%{search}%"));
+            }
+
+            var totalCount = await query.CountAsync();
+            
+            var posts = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (posts, totalCount);
+        }
     }
 }

@@ -245,22 +245,29 @@ namespace Prode.API.Controllers
 
         private void SetRefreshTokenCookie(string refreshToken)
         {
-            var isCrossSite = _configuration.GetValue<bool>("Cookies:CrossSite");
-            var isHttps = HttpContext.Request.IsHttps;
+            var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
 
-            // ✅ Regla del navegador: Si SameSite=None → Secure OBLIGATORIO sí o sí
-            // No es opcional, es un requisito del estándar
-            var secure = isCrossSite || isHttps;
-            
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None, // 🔥 ESTE ES EL FIX
                 Path = "/",
-                Domain = ".neps.com.ar", // ✅ DEJARLO
-                MaxAge = TimeSpan.FromDays(7) // 🔥 CLAVE: persistencia
+                MaxAge = TimeSpan.FromDays(7)
             };
+
+            if (isDev)
+            {
+                // 🔧 MODO DESARROLLO (localhost)
+                cookieOptions.Secure = false; // 👈 CLAVE
+                cookieOptions.SameSite = SameSiteMode.Lax; // 👈 seguro en dev
+                // ❌ NO seteamos Domain
+            }
+            else
+            {
+                // 🚀 PRODUCCIÓN
+                cookieOptions.Secure = true;
+                cookieOptions.SameSite = SameSiteMode.None;
+                cookieOptions.Domain = ".neps.com.ar";
+            }
 
             Response.Cookies.Append("refresh_token", refreshToken, cookieOptions);
         }

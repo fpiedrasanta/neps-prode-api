@@ -5,12 +5,18 @@ namespace Prode.Domain.Entities
         public Guid Id { get; set; }
         
         // Usuario que creó el post
-        public string UserId { get; set; } = string.Empty;
+        public string? UserId { get; set; }
         public virtual ApplicationUser? User { get; set; }
         
         // Partido relacionado
-        public Guid MatchId { get; set; }
+        public Guid? MatchId { get; set; }
         public virtual Match? Match { get; set; }
+
+        // Post Especial (Dashboard)
+        public bool IsSpecialPost { get; set; } = false;
+        
+        // Título del post (solo para posts especiales, admite HTML)
+        public string? Title { get; set; }
         
         // Predicción relacionada
         public Guid? PredictionId { get; set; }

@@ -3,11 +3,15 @@ namespace Prode.Application.DTOs
     public class PostDto
     {
         public Guid Id { get; set; }
-        public string UserId { get; set; } = string.Empty;
-        public string UserFullName { get; set; } = string.Empty;
+        public string? UserId { get; set; }
+        public string? UserFullName { get; set; }
         public string? UserAvatarUrl { get; set; }
+
+        // Post Especial
+        public bool IsSpecialPost { get; set; }
+        public string? Title { get; set; }
         
-        public Guid MatchId { get; set; }
+        public Guid? MatchId { get; set; }
         public string HomeTeamName { get; set; } = string.Empty;
         public string? HomeTeamFlagUrl { get; set; }
         public string AwayTeamName { get; set; } = string.Empty;
@@ -41,6 +45,12 @@ namespace Prode.Application.DTOs
 
     public class CreateCommentDto
     {
+        public string Content { get; set; } = string.Empty;
+    }
+
+    public class CreateSpecialPostDto
+    {
+        public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
     }
 }

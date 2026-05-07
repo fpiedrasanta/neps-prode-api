@@ -10,5 +10,10 @@ namespace Prode.Application.Interfaces
         Task<bool> DeleteAvatarAsync(string fileName);
         string GenerateFileName(string originalFileName, string userId);
         Task<string> SaveFlagAsync(Stream fileStream, string fileName);
+        
+        // Metodos genericos para imagenes
+        Task<(string FileName, string Url)> SaveImageAsync(Stream fileStream, string originalFileName);
+        Task<bool> DeleteImageAsync(string fileName);
+        string GenerateUniqueFileName(string originalFileName);
     }
 }

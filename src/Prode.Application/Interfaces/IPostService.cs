@@ -12,5 +12,17 @@ namespace Prode.Application.Interfaces
         
         // Agregar comentario a un post
         Task<CommentDto> AddCommentAsync(Guid postId, string userId, string content);
+
+        // Crear Post Especial (Dashboard)
+        Task<PostDto> CreateSpecialPostAsync(string title, string content);
+
+        // Actualizar Post Especial
+        Task<PostDto?> UpdateSpecialPostAsync(Guid postId, string title, string content);
+
+        // Eliminar Post Especial
+        Task<bool> DeleteSpecialPostAsync(Guid postId);
+
+        // Listar Posts Especiales paginados para administración
+        Task<(List<PostDto> Posts, int TotalCount, int TotalPages)> GetAllSpecialPostsAsync(int pageNumber, int pageSize, string? search);
     }
 }
