@@ -25,11 +25,12 @@ public class SendPushNotificationJob
     /// <summary>
     /// Envía una notificación push a TODOS los usuarios suscriptos.
     /// Solo usa string como parámetros (Hangfire serializa strings sin problemas).
+    /// Sin parámetros opcionales para evitar problemas de serialización.
     /// </summary>
     /// <param name="title">Título de la notificación</param>
     /// <param name="body">Cuerpo de la notificación</param>
-    /// <param name="dataJson">JSON opcional con datos adicionales (ej: {"click_action":"/feed"})</param>
-    public async Task SendToAllAsync(string title, string body, string? dataJson = null)
+    /// <param name="dataJson">JSON con datos adicionales (ej: {"click_action":"/feed"}). Pasar "null" si no hay datos.</param>
+    public async Task SendToAllAsync(string title, string body, string dataJson)
     {
         _logger.LogInformation(
             "📨 [Hangfire] Iniciando envío de notificación push a todos los usuarios. Title: {Title}, Body: {Body}",

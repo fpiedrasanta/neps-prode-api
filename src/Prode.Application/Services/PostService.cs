@@ -34,27 +34,19 @@ namespace Prode.Application.Services
 
         public async Task<(List<PostDto> Posts, int TotalCount, int TotalPages)> GetPostsAsync(int pageNumber, int pageSize, string currentUserId)
         {
-            // Obtener todos los amigos del usuario actual
             var summary = await _friendshipService.GetFriendshipSummaryAsync(currentUserId);
             var friendIds = summary.Friends.Select(f => f.FriendId).ToList();
-            
-            // Incluir tambien los propios posts del usuario
             friendIds.Add(currentUserId);
 
-            // Obtener posts normales de amigos + propios
             var (friendsPosts, friendsTotalCount) = await _postRepository.GetPostsByUsersAsync(friendIds, pageNumber, pageSize);
-            
-            // Obtener posts especiales globales
             var specialPosts = await _postRepository.GetSpecialPostsAsync();
 
-            // Unir y ordenar por fecha descendente
             var allPosts = friendsPosts.Concat(specialPosts)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToList();
 
             var totalPages = (int)Math.Ceiling(allPosts.Count / (double)pageSize);
             var pagedPosts = allPosts.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
-
             var postDtos = pagedPosts.Select(MapToDto).ToList();
 
             return (postDtos, allPosts.Count, totalPages);
@@ -63,18 +55,12 @@ namespace Prode.Application.Services
         public async Task<PostDto?> GetPostByIdAsync(Guid id)
         {
             var post = await _postRepository.GetPostByIdWithCommentsAsync(id);
-            if (post == null)
-            {
-                return null;
-            }
-
-            return MapToDto(post);
+            return post == null ? null : MapToDto(post);
         }
 
         public async Task<PostDto?> UpdateSpecialPostAsync(Guid postId, string title, string content)
         {
             var post = await _postRepository.GetPostByIdWithCommentsAsync(postId);
-            
             if (post == null || !post.IsSpecialPost)
                 return null;
 
@@ -84,17 +70,26 @@ namespace Prode.Application.Services
 
             await _postRepository.UpdatePostAsync(post);
 
-            // 📩 Notificación push a TODOS los usuarios suscriptos en background (Hangfire)
-            var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
-                job.SendToAllAsync(
-                    "📢 Nuevo post",
-                    title,
-                    "{\"click_action\":\"/feed\"}"
-                ));
+            try
+            {
+                var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
+                    job.SendToAllAsync(
+                        "📢 Nuevo post",
+                        title,
+                        "{\"click_action\":\"/feed\"}"
+                    ));
 
-            _logger.LogInformation(
-                "📨 [Hangfire] Post especial editado - notificaciones encoladas. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
-                jobId, postId, title);
+                _logger.LogInformation(
+                    "📨 [Hangfire] Post especial editado - notificaciones encoladas. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
+                    jobId, postId, title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "❌ [Hangfire] Error crítico al encolar notificaciones push para post especial editado. PostId: {PostId}, Title: {Title}, Message: {Message}",
+                    postId, title, ex.Message);
+                throw;
+            }
 
             return MapToDto(post);
         }
@@ -102,7 +97,6 @@ namespace Prode.Application.Services
         public async Task<bool> DeleteSpecialPostAsync(Guid postId)
         {
             var post = await _postRepository.GetPostByIdWithCommentsAsync(postId);
-            
             if (post == null || !post.IsSpecialPost)
                 return false;
 
@@ -113,7 +107,6 @@ namespace Prode.Application.Services
         public async Task<(List<PostDto> Posts, int TotalCount, int TotalPages)> GetAllSpecialPostsAsync(int pageNumber, int pageSize, string? search)
         {
             var (posts, totalCount) = await _postRepository.GetAllSpecialPostsPagedAsync(pageNumber, pageSize, search);
-            
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
             var postDtos = posts.Select(MapToDto).ToList();
 
@@ -122,12 +115,9 @@ namespace Prode.Application.Services
 
         public async Task<CommentDto> AddCommentAsync(Guid postId, string userId, string content)
         {
-            // Verificar que el post existe
             var post = await _postRepository.GetPostByIdWithCommentsAsync(postId);
             if (post == null)
-            {
                 throw new Exception("Post no encontrado");
-            }
 
             var comment = new Comment
             {
@@ -137,19 +127,17 @@ namespace Prode.Application.Services
             };
 
             await _postRepository.CreateCommentAsync(comment);
-            
-            // Recargar el comentario con los datos del usuario
+
             var createdComment = await _postRepository.GetCommentsByPostIdAsync(postId)
                 .ContinueWith(t => t.Result.LastOrDefault());
 
-            // 📩 Notificación push al dueño del post
             if (createdComment != null && post.UserId != null && post.UserId != userId)
             {
                 var userComment = await _userManager.FindByIdAsync(userId);
                 if (userComment != null)
                 {
-                    var matchInfo = post.Match != null 
-                        ? $"en {post.Match.HomeTeam?.Name} vs {post.Match.AwayTeam?.Name}" 
+                    var matchInfo = post.Match != null
+                        ? $"en {post.Match.HomeTeam?.Name} vs {post.Match.AwayTeam?.Name}"
                         : "";
 
                     await _pushNotificationService.SendNotificationToUsersAsync(
@@ -162,9 +150,7 @@ namespace Prode.Application.Services
             }
 
             if (createdComment == null)
-            {
                 throw new Exception("Error al crear el comentario");
-            }
 
             return new CommentDto
             {
@@ -192,17 +178,26 @@ namespace Prode.Application.Services
 
             await _postRepository.CreatePostAsync(post);
 
-            // 📩 Notificación push a TODOS los usuarios suscriptos en background (Hangfire)
-            var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
-                job.SendToAllAsync(
-                    "📢 Nuevo post",
-                    title,
-                    "{\"click_action\":\"/feed\"}"
-                ));
+            try
+            {
+                var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
+                    job.SendToAllAsync(
+                        "📢 Nuevo post",
+                        title,
+                        "{\"click_action\":\"/feed\"}"
+                    ));
 
-            _logger.LogInformation(
-                "📨 [Hangfire] Post especial creado - notificaciones encoladas. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
-                jobId, post.Id, title);
+                _logger.LogInformation(
+                    "📨 [Hangfire] Post especial creado - notificaciones encoladas. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
+                    jobId, post.Id, title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "❌ [Hangfire] Error crítico al encolar notificaciones push para post especial creado. PostId: {PostId}, Title: {Title}, Message: {Message}",
+                    post.Id, title, ex.Message);
+                throw;
+            }
 
             return MapToDto(post);
         }
@@ -215,28 +210,21 @@ namespace Prode.Application.Services
                 UserId = post.UserId,
                 UserFullName = post.User?.FullName,
                 UserAvatarUrl = post.User?.AvatarPath,
-
                 IsSpecialPost = post.IsSpecialPost,
                 Title = post.Title,
-                
                 MatchId = post.MatchId,
                 HomeTeamName = post.Match?.HomeTeam?.Name ?? string.Empty,
                 HomeTeamFlagUrl = post.Match?.HomeTeam?.FlagUrl,
                 AwayTeamName = post.Match?.AwayTeam?.Name ?? string.Empty,
                 AwayTeamFlagUrl = post.Match?.AwayTeam?.FlagUrl,
-                
                 HomeScore = post.Match?.HomeScore,
                 AwayScore = post.Match?.AwayScore,
-                
                 HomePrediction = post.Prediction?.HomeGoals,
                 AwayPrediction = post.Prediction?.AwayGoals,
-                
                 PointsEarned = post.PointsEarned,
                 MatchDate = post.Match?.MatchDate ?? DateTime.MinValue,
-                
                 Content = post.Content,
                 CreatedAt = post.CreatedAt,
-                
                 Comments = post.Comments?.Select(c => new CommentDto
                 {
                     Id = c.Id,
