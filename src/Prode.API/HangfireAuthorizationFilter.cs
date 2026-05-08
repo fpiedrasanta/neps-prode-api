@@ -22,8 +22,9 @@ public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
         var env = httpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
         var requireAuth = config.GetSection("Hangfire:Dashboard").GetValue<bool>("RequireAuthentication");
 
-        // Modo desarrollo: si no requiere auth, permitir todo
-        if (env.IsDevelopment() && !requireAuth)
+        // Si está configurado para NO requerir autenticación, permitir todo
+        // (útil para pruebas locales o debugging, no recomendado en producción)
+        if (!requireAuth)
             return true;
 
         // 1️. Verificar si el usuario ya está autenticado vía JWT (API calls desde el frontend)
