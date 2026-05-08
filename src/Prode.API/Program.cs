@@ -1,6 +1,9 @@
 using System.Reflection;
 using System.Text;
+using Hangfire;
+using Hangfire.MySql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,8 +18,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Prode.Domain.Entities;
+using Prode.Application;
 using Prode.Application.Helpers;
 using Prode.API.Converters;
+using Prode.API;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -157,6 +162,30 @@ builder.Services.AddHostedService<MaintenanceBackgroundService>();
 // 🔹 Push Notifications
 builder.Services.AddScoped<IPushNotificationService, WebPushNotificationService>();
 builder.Services.AddScoped<IUserPushSubscriptionRepository, UserPushSubscriptionRepository>();
+builder.Services.AddScoped<SendPushNotificationJob>();
+
+// 🔹 Hangfire - Background Job Processing
+var hangfireSection = builder.Configuration.GetSection("Hangfire");
+builder.Services.AddHangfire(config =>
+{
+    config.UseStorage(new MySqlStorage(
+        builder.Configuration.GetConnectionString("DefaultConnection")!,
+        new MySqlStorageOptions
+        {
+            TablesPrefix = "Hangfire_",
+            QueuePollInterval = TimeSpan.FromSeconds(hangfireSection.GetValue<int>("SchedulePollingIntervalSeconds", 15))
+        }
+    ));
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.ServerName = hangfireSection["ServerName"] ?? $"{Environment.MachineName}-prode-api";
+    options.WorkerCount = hangfireSection.GetValue<int>("WorkerCount", 5);
+    options.Queues = hangfireSection.GetSection("Queues").Get<string[]>() ?? ["default"];
+    options.SchedulePollingInterval = TimeSpan.FromSeconds(
+        hangfireSection.GetValue<int>("SchedulePollingIntervalSeconds", 15));
+});
 
 // 🔹 JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -235,6 +264,33 @@ using (var scope = app.Services.CreateScope())
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 🔹 Hangfire Dashboard (protegido por autenticación en producción)
+if (hangfireSection.GetSection("Dashboard").GetValue<bool>("Enabled"))
+{
+    var dashboardOptions = new DashboardOptions
+    {
+        DashboardTitle = "Prode Hangfire",
+        AppPath = "/hangfire",
+        DisplayStorageConnectionString = false,
+        StatsPollingInterval = 5000
+    };
+
+    // En producción, requerir autenticación y rol Admin
+    if (!app.Environment.IsDevelopment() || hangfireSection.GetSection("Dashboard").GetValue<bool>("RequireAuthentication"))
+    {
+        dashboardOptions.Authorization = new[]
+        {
+            new Prode.API.HangfireAuthorizationFilter()
+        };
+    }
+
+    app.UseHangfireDashboard(
+        hangfireSection["Dashboard:Url"] ?? "/hangfire",
+        dashboardOptions
+    );
+}
+
 app.MapControllers();
 
 app.Run();

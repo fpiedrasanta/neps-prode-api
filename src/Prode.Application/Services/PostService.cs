@@ -1,3 +1,4 @@
+using Hangfire;
 using Prode.Application.DTOs;
 using Prode.Application.Interfaces;
 using Prode.Domain.Entities;
@@ -10,17 +11,20 @@ namespace Prode.Application.Services
         private readonly IPostRepository _postRepository;
         private readonly IFriendshipService _friendshipService;
         private readonly IPushNotificationService _pushNotificationService;
+        private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public PostService(
             IPostRepository postRepository,
             IFriendshipService friendshipService,
             IPushNotificationService pushNotificationService,
+            IBackgroundJobClient backgroundJobClient,
             UserManager<ApplicationUser> userManager)
         {
             _postRepository = postRepository;
             _friendshipService = friendshipService;
             _pushNotificationService = pushNotificationService;
+            _backgroundJobClient = backgroundJobClient;
             _userManager = userManager;
         }
 
@@ -76,12 +80,13 @@ namespace Prode.Application.Services
 
             await _postRepository.UpdatePostAsync(post);
 
-            // 📩 Notificación push a TODOS los usuarios suscriptos cuando se edita un post especial
-            await _pushNotificationService.SendNotificationToAllUsersAsync(
-                "📢 Nuevo post",
-                $"{title}",
-                new { click_action = "/feed" }
-            );
+            // 📩 Notificación push a TODOS los usuarios suscriptos en background (Hangfire)
+            _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
+                job.SendToAllAsync(
+                    "📢 Nuevo post",
+                    title,
+                    new Dictionary<string, string> { { "click_action", "/feed" } }
+                ));
 
             return MapToDto(post);
         }
@@ -179,12 +184,13 @@ namespace Prode.Application.Services
 
             await _postRepository.CreatePostAsync(post);
 
-            // 📩 Notificación push a TODOS los usuarios suscriptos
-            await _pushNotificationService.SendNotificationToAllUsersAsync(
-                "📢 Nuevo post",
-                $"{title}",
-                new { click_action = "/feed" }
-            );
+            // 📩 Notificación push a TODOS los usuarios suscriptos en background (Hangfire)
+            _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
+                job.SendToAllAsync(
+                    "📢 Nuevo post",
+                    title,
+                    new Dictionary<string, string> { { "click_action", "/feed" } }
+                ));
 
             return MapToDto(post);
         }
