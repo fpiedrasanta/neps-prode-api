@@ -76,6 +76,13 @@ namespace Prode.Application.Services
 
             await _postRepository.UpdatePostAsync(post);
 
+            // 📩 Notificación push a TODOS los usuarios suscriptos cuando se edita un post especial
+            await _pushNotificationService.SendNotificationToAllUsersAsync(
+                "📢 Nuevo post",
+                $"{title}",
+                new { click_action = "/feed" }
+            );
+
             return MapToDto(post);
         }
 
@@ -172,23 +179,12 @@ namespace Prode.Application.Services
 
             await _postRepository.CreatePostAsync(post);
 
-            // 📩 Notificación push a todos los amigos del usuario
-            if (post.UserId != null)
-            {
-                var userPost = await _userManager.FindByIdAsync(post.UserId);
-                var summary = await _friendshipService.GetFriendshipSummaryAsync(post.UserId);
-                var friendIds = summary.Friends.Select(f => f.FriendId);
-
-                if (userPost != null && friendIds.Any())
-                {
-                    await _pushNotificationService.SendNotificationToUsersAsync(
-                        friendIds,
-                        "📝 Nuevo posteo",
-                        $"{userPost.FullName} hizo un nuevo posteo.",
-                        new { click_action = "/feed" }
-                    );
-                }
-            }
+            // 📩 Notificación push a TODOS los usuarios suscriptos
+            await _pushNotificationService.SendNotificationToAllUsersAsync(
+                "📢 Nuevo post",
+                $"{title}",
+                new { click_action = "/feed" }
+            );
 
             return MapToDto(post);
         }
