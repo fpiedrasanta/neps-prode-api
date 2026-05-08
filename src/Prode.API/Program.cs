@@ -263,36 +263,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseAuthentication();
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-    var hangfireTables = new[] { "Hangfire_Job", "Hangfire_State", "Hangfire_Hash", "Hangfire_List", "Hangfire_Set", "Hangfire_Counter", "Hangfire_AggregatedCounter", "Hangfire_Server" };
-
-    foreach (var table in hangfireTables)
-    {
-        try
-        {
-            var exists = await dbContext.Database.ExecuteSqlRawAsync(
-                $"SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{{0}}'",
-                table);
-
-            if (exists > 0)
-            {
-                await dbContext.Database.ExecuteSqlRawAsync(
-                    $"ALTER TABLE `{table}` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-                logger.LogInformation("✅ [Hangfire] Tabla {Table} migrada a utf8mb4", table);
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "⚠️ [Hangfire] No se pudo migrar tabla {Table}", table);
-        }
-    }
-}
-
-app.UseAuthentication();
 app.UseAuthorization();
 
 // 🔹 Hangfire Dashboard (protegido por autenticación en producción)
