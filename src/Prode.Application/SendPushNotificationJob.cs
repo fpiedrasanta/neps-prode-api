@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Prode.Application.Interfaces;
 
@@ -6,6 +7,7 @@ namespace Prode.Application;
 /// <summary>
 /// Job de Hangfire para enviar notificaciones push en background.
 /// Se ejecuta en un worker separado del request HTTP.
+/// Solo usa tipos primitivos como parámetros para evitar problemas de serialización con Hangfire.
 /// </summary>
 public class SendPushNotificationJob
 {
@@ -22,12 +24,12 @@ public class SendPushNotificationJob
 
     /// <summary>
     /// Envía una notificación push a TODOS los usuarios suscriptos.
-    /// Los parámetros son serializables por Hangfire (tipos primitivos + Dictionary).
+    /// Solo usa string como parámetros (Hangfire serializa strings sin problemas).
     /// </summary>
     /// <param name="title">Título de la notificación</param>
     /// <param name="body">Cuerpo de la notificación</param>
-    /// <param name="data">Datos adicionales (ej: click_action)</param>
-    public async Task SendToAllAsync(string title, string body, Dictionary<string, string>? data = null)
+    /// <param name="dataJson">JSON opcional con datos adicionales (ej: {"click_action":"/feed"})</param>
+    public async Task SendToAllAsync(string title, string body, string? dataJson = null)
     {
         _logger.LogInformation(
             "📨 [Hangfire] Iniciando envío de notificación push a todos los usuarios. Title: {Title}, Body: {Body}",
@@ -35,6 +37,12 @@ public class SendPushNotificationJob
 
         try
         {
+            object? data = null;
+            if (!string.IsNullOrEmpty(dataJson))
+            {
+                data = JsonSerializer.Deserialize<object>(dataJson);
+            }
+
             await _pushNotificationService.SendNotificationToAllUsersAsync(title, body, data);
 
             _logger.LogInformation(

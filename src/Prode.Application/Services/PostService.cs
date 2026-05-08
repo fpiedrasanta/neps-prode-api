@@ -1,4 +1,5 @@
 using Hangfire;
+using Microsoft.Extensions.Logging;
 using Prode.Application.DTOs;
 using Prode.Application.Interfaces;
 using Prode.Domain.Entities;
@@ -12,6 +13,7 @@ namespace Prode.Application.Services
         private readonly IFriendshipService _friendshipService;
         private readonly IPushNotificationService _pushNotificationService;
         private readonly IBackgroundJobClient _backgroundJobClient;
+        private readonly ILogger<PostService> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public PostService(
@@ -19,12 +21,14 @@ namespace Prode.Application.Services
             IFriendshipService friendshipService,
             IPushNotificationService pushNotificationService,
             IBackgroundJobClient backgroundJobClient,
+            ILogger<PostService> logger,
             UserManager<ApplicationUser> userManager)
         {
             _postRepository = postRepository;
             _friendshipService = friendshipService;
             _pushNotificationService = pushNotificationService;
             _backgroundJobClient = backgroundJobClient;
+            _logger = logger;
             _userManager = userManager;
         }
 
@@ -81,12 +85,16 @@ namespace Prode.Application.Services
             await _postRepository.UpdatePostAsync(post);
 
             // 📩 Notificación push a TODOS los usuarios suscriptos en background (Hangfire)
-            _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
+            var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
                 job.SendToAllAsync(
                     "📢 Nuevo post",
                     title,
-                    new Dictionary<string, string> { { "click_action", "/feed" } }
+                    "{\"click_action\":\"/feed\"}"
                 ));
+
+            _logger.LogInformation(
+                "📨 [Hangfire] Post especial editado - notificaciones encoladas. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
+                jobId, postId, title);
 
             return MapToDto(post);
         }
@@ -185,12 +193,16 @@ namespace Prode.Application.Services
             await _postRepository.CreatePostAsync(post);
 
             // 📩 Notificación push a TODOS los usuarios suscriptos en background (Hangfire)
-            _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
+            var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
                 job.SendToAllAsync(
                     "📢 Nuevo post",
                     title,
-                    new Dictionary<string, string> { { "click_action", "/feed" } }
+                    "{\"click_action\":\"/feed\"}"
                 ));
+
+            _logger.LogInformation(
+                "📨 [Hangfire] Post especial creado - notificaciones encoladas. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
+                jobId, post.Id, title);
 
             return MapToDto(post);
         }
