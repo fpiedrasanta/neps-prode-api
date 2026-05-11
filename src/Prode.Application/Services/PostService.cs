@@ -1,6 +1,7 @@
 using Hangfire;
 using Microsoft.Extensions.Logging;
 using Prode.Application.DTOs;
+using Prode.Application.Helpers;
 using Prode.Application.Interfaces;
 using Prode.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -52,7 +53,7 @@ namespace Prode.Application.Services
             return post == null ? null : MapToDto(post);
         }
 
-        public async Task<PostDto?> UpdateSpecialPostAsync(Guid postId, string title, string content)
+        public async Task<PostDto?> UpdateSpecialPostAsync(Guid postId, string title, string content, DateTime? scheduledAt = null)
         {
             var post = await _postRepository.GetPostByIdWithCommentsAsync(postId);
             if (post == null || !post.IsSpecialPost)
@@ -60,10 +61,14 @@ namespace Prode.Application.Services
 
             post.Title = title;
             post.Content = content;
+            post.CreatedAt = scheduledAt.HasValue
+                ? DateTimeHelper.NormalizeForPersistence(scheduledAt.Value, $"UpdateSpecialPost-{postId}")
+                : post.CreatedAt;
             post.UpdatedAt = DateTime.UtcNow;
 
             await _postRepository.UpdatePostAsync(post);
 
+            /*
             try
             {
                 var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
@@ -84,6 +89,7 @@ namespace Prode.Application.Services
                     postId, title, ex.Message);
                 throw;
             }
+            */
 
             return MapToDto(post);
         }
@@ -157,14 +163,16 @@ namespace Prode.Application.Services
             };
         }
 
-        public async Task<PostDto> CreateSpecialPostAsync(string title, string content)
+        public async Task<PostDto> CreateSpecialPostAsync(string title, string content, DateTime? scheduledAt = null)
         {
             var post = new Post
             {
                 IsSpecialPost = true,
                 Title = title,
                 Content = content,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = scheduledAt.HasValue
+                    ? DateTimeHelper.NormalizeForPersistence(scheduledAt.Value, "CreateSpecialPost")
+                    : DateTime.UtcNow,
                 UserId = null,
                 MatchId = null,
                 PredictionId = null
@@ -172,6 +180,7 @@ namespace Prode.Application.Services
 
             await _postRepository.CreatePostAsync(post);
 
+            /*
             try
             {
                 var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
@@ -192,6 +201,7 @@ namespace Prode.Application.Services
                     post.Id, title, ex.Message);
                 throw;
             }
+            */
 
             return MapToDto(post);
         }

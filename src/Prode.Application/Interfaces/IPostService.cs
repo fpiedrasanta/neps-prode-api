@@ -14,10 +14,10 @@ namespace Prode.Application.Interfaces
         Task<CommentDto> AddCommentAsync(Guid postId, string userId, string content);
 
         // Crear Post Especial (Dashboard)
-        Task<PostDto> CreateSpecialPostAsync(string title, string content);
+        Task<PostDto> CreateSpecialPostAsync(string title, string content, DateTime? scheduledAt = null);
 
         // Actualizar Post Especial
-        Task<PostDto?> UpdateSpecialPostAsync(Guid postId, string title, string content);
+        Task<PostDto?> UpdateSpecialPostAsync(Guid postId, string title, string content, DateTime? scheduledAt = null);
 
         // Eliminar Post Especial
         Task<bool> DeleteSpecialPostAsync(Guid postId);

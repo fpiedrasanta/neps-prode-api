@@ -100,7 +100,7 @@ namespace Prode.API.Controllers
         {
             try
             {
-                var post = await _postService.CreateSpecialPostAsync(dto.Title, dto.Content);
+                var post = await _postService.CreateSpecialPostAsync(dto.Title, dto.Content, dto.ScheduledAt);
                 return Ok(post);
             }
             catch (Exception ex)
@@ -118,7 +118,7 @@ namespace Prode.API.Controllers
         {
             try
             {
-                var post = await _postService.UpdateSpecialPostAsync(id, dto.Title, dto.Content);
+                var post = await _postService.UpdateSpecialPostAsync(id, dto.Title, dto.Content, dto.ScheduledAt);
                 if (post == null)
                     return NotFound("Post especial no encontrado");
                 

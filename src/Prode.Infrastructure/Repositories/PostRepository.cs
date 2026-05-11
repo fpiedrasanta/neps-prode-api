@@ -9,6 +9,7 @@ namespace Prode.Infrastructure.Repositories
     {
         public async Task<(List<Post> Posts, int TotalCount)> GetPostsByUsersAsync(List<string> userIds, int pageNumber, int pageSize)
         {
+            var now = DateTime.UtcNow;
             var query = _context.Posts
                 .Include(p => p.User)
                 .Include(p => p.Match)
@@ -20,7 +21,7 @@ namespace Prode.Infrastructure.Repositories
                 .Include(p => p.Prediction)
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
-                .Where(p => userIds.Contains(p.UserId) || p.IsSpecialPost)
+                .Where(p => (userIds.Contains(p.UserId) || p.IsSpecialPost) && p.CreatedAt <= now)
                 .OrderByDescending(p => p.CreatedAt)
                 .AsQueryable();
 
@@ -43,7 +44,7 @@ namespace Prode.Infrastructure.Repositories
         public async Task<Post> CreatePostAsync(Post post)
         {
             post.Id = Guid.NewGuid();
-            post.CreatedAt = DateTime.UtcNow;
+            post.CreatedAt = post.CreatedAt == default ? DateTime.UtcNow : post.CreatedAt;
             _context.Posts.Add(post);
             await _context.SaveChangesAsync();
             return post;
