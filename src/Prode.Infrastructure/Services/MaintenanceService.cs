@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Prode.Application.Interfaces;
 using Prode.Domain.Entities;
+using Prode.Infrastructure.Data;
 
 namespace Prode.Infrastructure.Services
 {
@@ -12,6 +14,8 @@ namespace Prode.Infrastructure.Services
         private readonly IPostRepository _postRepository;
         private readonly IPushNotificationService _pushNotificationService;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<MaintenanceService> _logger;
+        private readonly ApplicationDbContext _context;
 
         public MaintenanceService(
             IPredictionRepository predictionRepository,
@@ -19,7 +23,9 @@ namespace Prode.Infrastructure.Services
             IMatchRepository matchRepository,
             IPostRepository postRepository,
             IPushNotificationService pushNotificationService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<MaintenanceService> logger,
+            ApplicationDbContext context)
         {
             _predictionRepository = predictionRepository;
             _friendshipRepository = friendshipRepository;
@@ -27,6 +33,8 @@ namespace Prode.Infrastructure.Services
             _postRepository = postRepository;
             _pushNotificationService = pushNotificationService;
             _configuration = configuration;
+            _logger = logger;
+            _context = context;
         }
 
         public async Task<int> CalculatePointsForFinishedMatchesAsync()
@@ -46,25 +54,43 @@ namespace Prode.Infrastructure.Services
 
             foreach (var prediction in predictions)
             {
-                var resultTypeName = CalculateResultTypeName(
-                    prediction.HomeGoals,
-                    prediction.AwayGoals,
-                    prediction.Match.HomeScore!.Value,
-                    prediction.Match.AwayScore!.Value);
+                // Usar transacción para que se actualice la predicción y los puntos del usuario
+                // de forma atómica: o se actualizan ambos o ninguno
+                await using var transaction = await _context.Database.BeginTransactionAsync();
 
-                var resultType = resultTypes.FirstOrDefault(rt => rt.Name == resultTypeName);
-                if (resultType != null)
+                try
                 {
-                    prediction.ResultType = resultType;
-                    await _predictionRepository.UpdatePredictionAsync(prediction);
-                    
-                    // Actualizar TotalPoints del usuario
-                    if (prediction.User != null)
+                    var resultTypeName = CalculateResultTypeName(
+                        prediction.HomeGoals,
+                        prediction.AwayGoals,
+                        prediction.Match.HomeScore!.Value,
+                        prediction.Match.AwayScore!.Value);
+
+                    var resultType = resultTypes.FirstOrDefault(rt => rt.Name == resultTypeName);
+                    if (resultType != null)
                     {
-                        await _predictionRepository.UpdateUserTotalPointsAsync(prediction.UserId, resultType.Points);
+                        prediction.ResultType = resultType;
+                        await _predictionRepository.UpdatePredictionAsync(prediction);
+                        
+                        // Actualizar TotalPoints del usuario
+                        if (prediction.User != null)
+                        {
+                            await _predictionRepository.UpdateUserTotalPointsAsync(prediction.UserId, resultType.Points);
+                        }
+                        
+                        await transaction.CommitAsync();
+                        totalUpdated++;
                     }
-                    
-                    totalUpdated++;
+                    else
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error al calcular puntos para la predicción {PredictionId} del usuario {UserId}. Message: {Message}", 
+                        prediction.Id, prediction.UserId, ex.Message);
                 }
             }
 

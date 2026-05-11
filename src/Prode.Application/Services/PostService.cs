@@ -39,17 +39,11 @@ namespace Prode.Application.Services
             friendIds.Add(currentUserId);
 
             var (friendsPosts, friendsTotalCount) = await _postRepository.GetPostsByUsersAsync(friendIds, pageNumber, pageSize);
-            var specialPosts = await _postRepository.GetSpecialPostsAsync();
+            
+            var totalPages = (int)Math.Ceiling(friendsTotalCount / (double)pageSize);
+            var postDtos = friendsPosts.Select(MapToDto).ToList();
 
-            var allPosts = friendsPosts.Concat(specialPosts)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToList();
-
-            var totalPages = (int)Math.Ceiling(allPosts.Count / (double)pageSize);
-            var pagedPosts = allPosts.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
-            var postDtos = pagedPosts.Select(MapToDto).ToList();
-
-            return (postDtos, allPosts.Count, totalPages);
+            return (postDtos, friendsTotalCount, totalPages);
         }
 
         public async Task<PostDto?> GetPostByIdAsync(Guid id)

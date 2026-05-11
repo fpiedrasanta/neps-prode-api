@@ -20,7 +20,7 @@ namespace Prode.Infrastructure.Repositories
                 .Include(p => p.Prediction)
                 .Include(p => p.Comments)
                     .ThenInclude(c => c.User)
-                .Where(p => userIds.Contains(p.UserId))
+                .Where(p => userIds.Contains(p.UserId) || p.IsSpecialPost)
                 .OrderByDescending(p => p.CreatedAt)
                 .AsQueryable();
 
