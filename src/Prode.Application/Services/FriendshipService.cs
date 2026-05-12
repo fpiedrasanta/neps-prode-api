@@ -123,7 +123,7 @@ namespace Prode.Application.Services
                     new[] { targetUserId.ToString() },
                     "👋 Nueva solicitud de amistad",
                     $"{currentUser.FullName} te está solicitando amistad",
-                    new { click_action = "/friends" }
+                    new { click_action = "/?openRequests=true" }
                 );
             }
 
@@ -162,7 +162,7 @@ namespace Prode.Application.Services
                     new[] { friendship.RequesterId },
                     "✅ Solicitud aceptada!",
                     $"Ahora ya son amigos con {currentUser.FullName}",
-                    new { click_action = "/friends" }
+                    new { click_action = "/?openRequests=true" }
                 );
             }
         }

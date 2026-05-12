@@ -211,7 +211,7 @@ Pronóstico: {prediction.HomeGoals} - {prediction.AwayGoals}";
                         userIdsWithoutPrediction,
                         $"⏰ {match.GetHomeTeamName()} vs {match.GetAwayTeamName()}",
                         $"Faltan {reminderMinutesBefore} minutos para cerrar las apuestas. ¿Ya hiciste tu pronóstico?",
-                        new { click_action = "/#proximos" }
+                        new { click_action = "/?tab=0" }
                     );
                 }
 
@@ -231,7 +231,7 @@ Pronóstico: {prediction.HomeGoals} - {prediction.AwayGoals}";
                 await _pushNotificationService.SendNotificationToAllUsersAsync(
                     "⚽ ¡El partido empezo!",
                     $"{match.GetHomeTeamName()} vs {match.GetAwayTeamName()} ya esta en curso",
-                    new { click_action = "/#juego" }
+                    new { click_action = "/?tab=1" }
                 );
 
                 match.StartedNotificationSent = true;
@@ -250,7 +250,7 @@ Pronóstico: {prediction.HomeGoals} - {prediction.AwayGoals}";
                 await _pushNotificationService.SendNotificationToAllUsersAsync(
                     "🎉 Resultados listos!",
                     "Ya finalizaron los partidos, mira como quedaron!",
-                    new { click_action = "/#finalizados" }
+                    new { click_action = "/?tab=2" }
                 );
 
                 match.FinishedNotificationSent = true;

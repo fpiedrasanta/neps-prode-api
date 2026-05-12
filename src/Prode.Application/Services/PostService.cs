@@ -68,19 +68,20 @@ namespace Prode.Application.Services
 
             await _postRepository.UpdatePostAsync(post);
 
-            /*
             try
             {
-                var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
+                var notifyAt = new DateTimeOffset(post.CreatedAt, TimeSpan.Zero);
+                var jobId = _backgroundJobClient.Schedule<SendPushNotificationJob>(job =>
                     job.SendToAllAsync(
                         "📢 Nuevo post",
                         title,
                         "{\"click_action\":\"/feed\"}"
-                    ));
+                    ), notifyAt);
 
+                var scheduleType = notifyAt > DateTimeOffset.UtcNow ? "programadas" : "encoladas";
                 _logger.LogInformation(
-                    "📨 [Hangfire] Post especial editado - notificaciones encoladas. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
-                    jobId, postId, title);
+                    "📨 [Hangfire] Post especial editado - notificaciones {ScheduleType} para {NotifyAt:O}. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
+                    scheduleType, notifyAt, jobId, postId, title);
             }
             catch (Exception ex)
             {
@@ -89,7 +90,6 @@ namespace Prode.Application.Services
                     postId, title, ex.Message);
                 throw;
             }
-            */
 
             return MapToDto(post);
         }
@@ -180,19 +180,20 @@ namespace Prode.Application.Services
 
             await _postRepository.CreatePostAsync(post);
 
-            /*
             try
             {
-                var jobId = _backgroundJobClient.Enqueue<SendPushNotificationJob>(job =>
+                var notifyAt = new DateTimeOffset(post.CreatedAt, TimeSpan.Zero);
+                var jobId = _backgroundJobClient.Schedule<SendPushNotificationJob>(job =>
                     job.SendToAllAsync(
                         "📢 Nuevo post",
                         title,
                         "{\"click_action\":\"/feed\"}"
-                    ));
+                    ), notifyAt);
 
+                var scheduleType = notifyAt > DateTimeOffset.UtcNow ? "programadas" : "encoladas";
                 _logger.LogInformation(
-                    "📨 [Hangfire] Post especial creado - notificaciones encoladas. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
-                    jobId, post.Id, title);
+                    "📨 [Hangfire] Post especial creado - notificaciones {ScheduleType} para {NotifyAt:O}. JobId: {JobId}, PostId: {PostId}, Title: {Title}",
+                    scheduleType, notifyAt, jobId, post.Id, title);
             }
             catch (Exception ex)
             {
@@ -201,7 +202,6 @@ namespace Prode.Application.Services
                     post.Id, title, ex.Message);
                 throw;
             }
-            */
 
             return MapToDto(post);
         }
